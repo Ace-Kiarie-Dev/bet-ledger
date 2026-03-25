@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "BetLedger2",
-    "slug": "BetLedger2",
+    "name": "BetLedger",
+    "slug": "BetLedger",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
