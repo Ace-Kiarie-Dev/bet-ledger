@@ -1,0 +1,39 @@
+// app/constants/index.js
+export { COLORS } from './colors';
+export { FONTS, TYPE } from './typography';
+
+// Shared spacing scale
+export const SPACING = {
+  xs:  4,
+  sm:  8,
+  md:  16,
+  lg:  24,
+  xl:  32,
+  xxl: 48,
+};
+
+// Border radius — sharp & grounded, not pill-shaped
+export const RADIUS = {
+  sm:  4,
+  md:  8,
+  lg:  12,
+  xl:  16,
+};
+
+// Ambient shadow (used on floating cards & modals)
+export const SHADOW = {
+  ambient: {
+    shadowColor: '#020F1E',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  subtle: {
+    shadowColor: '#020F1E',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+};
