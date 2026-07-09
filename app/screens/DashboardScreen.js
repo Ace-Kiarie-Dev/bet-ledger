@@ -10,8 +10,11 @@ import {
   ActivityIndicator,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { getUserProfile, createUserProfile, getBets } from '../utils/storage';
 import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW } from '../constants';
@@ -103,30 +106,47 @@ export default function DashboardScreen() {
 
   const onRefresh = useCallback(() => loadData(true), [loadData]);
 
+  async function handleDebugSignOut() {
+    await signOut(auth);
+    // onAuthStateChanged in AppNavigator routes back to Onboarding automatically.
+  }
+
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer} edges={['top']}>
         <StatusBar barStyle="light-content" />
         <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (bets.length === 0) {
     return (
-      <View style={styles.screen}>
+      <SafeAreaView style={styles.screen} edges={['top']}>
         <StatusBar barStyle="light-content" />
+        <View style={styles.emptyHeaderRow}>
+          <Text style={styles.emptyGreeting}>Hey, {profile?.username || 'Player'}</Text>
+          {/* TODO: Remove once SettingsScreen has a real sign-out — Session 8 */}
+          <TouchableOpacity onPress={handleDebugSignOut} hitSlop={8}>
+            <Text style={styles.debugSignOutText}>SIGN OUT</Text>
+          </TouchableOpacity>
+        </View>
         <ScrollView
           contentContainerStyle={styles.emptyContainer}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
         >
           <Text style={styles.emptyGhost}>KES 0</Text>
           <Text style={styles.emptyTitle}>Your story starts with your first bet</Text>
-          <TouchableOpacity style={styles.cta} onPress={() => navigation.navigate('AddBet')} activeOpacity={0.85}>
-            <Text style={styles.ctaText}>Log a Bet</Text>
+          <TouchableOpacity
+            style={[styles.emptyCta, SHADOW.subtle]}
+            onPress={() => navigation.navigate('AddBet')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.emptyCtaText}>Log a Bet</Text>
+            <Ionicons name="arrow-forward" size={18} color={COLORS.onPrimary} style={{ marginLeft: SPACING.sm }} />
           </TouchableOpacity>
         </ScrollView>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -138,15 +158,21 @@ export default function DashboardScreen() {
   const recentBets = bets.slice(0, 3);
 
   return (
-    <View style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['top']}>
       <StatusBar barStyle="light-content" />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
       >
-        <View style={styles.header}>
-          <Text style={styles.headerLabel}>Dashboard</Text>
-          <Text style={styles.headerGreeting}>Hey, {profile?.username || 'Bettor'}</Text>
+        <View style={[styles.header, styles.headerRow]}>
+          <View>
+            <Text style={styles.headerLabel}>Dashboard</Text>
+            <Text style={styles.headerGreeting}>Hey, {profile?.username || 'Bettor'}</Text>
+          </View>
+          {/* TODO: Remove once SettingsScreen has a real sign-out — Session 8 */}
+          <TouchableOpacity onPress={handleDebugSignOut} hitSlop={8}>
+            <Text style={styles.debugSignOutText}>SIGN OUT</Text>
+          </TouchableOpacity>
         </View>
 
         <LinearGradient
@@ -232,7 +258,7 @@ export default function DashboardScreen() {
           <Text style={styles.ctaText}>Log a Bet</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -256,17 +282,39 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: SPACING.lg,
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
   headerLabel: {
     ...TYPE.labelSm,
     color: COLORS.outline,
     marginBottom: SPACING.xs,
   },
   headerGreeting: {
-    ...TYPE.headlineSm,
-    color: COLORS.onSurface,
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 16,
+    color: COLORS.onSurfaceVariant,
+  },
+  debugSignOutText: {
+    ...TYPE.labelSm,
+    color: COLORS.tertiary,
   },
 
   // ─── Empty state ───
+  emptyHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
+  },
+  emptyGreeting: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 16,
+    color: COLORS.onSurfaceVariant,
+  },
   emptyContainer: {
     flexGrow: 1,
     alignItems: 'center',
@@ -275,16 +323,33 @@ const styles = StyleSheet.create({
   },
   emptyGhost: {
     ...TYPE.displayLg,
-    fontSize: 72,
-    lineHeight: 76,
+    fontSize: 46,
+    lineHeight: 50,
     color: COLORS.surfaceHigh,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
   },
   emptyTitle: {
     ...TYPE.titleMd,
+    fontSize: 13,
+    lineHeight: 18,
     color: COLORS.onSurfaceVariant,
     textAlign: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
+  },
+  emptyCta: {
+    alignSelf: 'center',
+    width: '70%',
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: 999,
+  },
+  emptyCtaText: {
+    ...TYPE.titleMd,
+    fontFamily: FONTS.bodySemiBold,
+    color: COLORS.onPrimary,
   },
 
   // ─── Hero card ───
