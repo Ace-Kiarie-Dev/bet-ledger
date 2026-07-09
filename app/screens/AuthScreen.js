@@ -1,21 +1,122 @@
 // app/screens/AuthScreen.js
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
+  StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  StyleSheet,
-  SafeAreaView,
+  StatusBar,
+  Dimensions,
+  Animated,
 } from 'react-native';
-import {
-  GoogleSignin,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
+import Svg, { Path } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import { auth } from '../firebase';
 import { getUserProfile, createUserProfile } from '../utils/storage';
 import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW } from '../constants';
+
+const { width, height } = Dimensions.get('window');
+const HERO_HEIGHT = height * 0.35;
+
+// ─── Topographic contour overlay (same style as Onboarding, ~15% opacity) ──
+function ContourOverlay() {
+  const lines = [0.15, 0.32, 0.5, 0.68, 0.85];
+  return (
+    <Svg width={width} height={HERO_HEIGHT} style={StyleSheet.absoluteFill} pointerEvents="none">
+      {lines.map((t, i) => {
+        const y = HERO_HEIGHT * t;
+        const amp = 14 + (i % 3) * 6;
+        const d = `M0,${y} C${width * 0.25},${y - amp} ${width * 0.4},${y + amp} ${width * 0.6},${y} C${width * 0.8},${y - amp} ${width * 0.9},${y + amp} ${width},${y}`;
+        return <Path key={i} d={d} stroke="#FFFFFF" strokeWidth={1} fill="none" opacity={0.15} />;
+      })}
+    </Svg>
+  );
+}
+
+// ─── Asymmetric organic wave — identical path to OnboardingScreen's HeroWave ─
+function HeroWave() {
+  const waveHeight = 56;
+  const d = `M0,${waveHeight * 0.4}
+    C${width * 0.22},${waveHeight * 1.3} ${width * 0.38},0 ${width * 0.62},${waveHeight * 0.5}
+    C${width * 0.82},${waveHeight * 1.1} ${width * 0.92},${waveHeight * 0.2} ${width},${waveHeight * 0.65}
+    L${width},${waveHeight} L0,${waveHeight} Z`;
+
+  return (
+    <Svg width={width} height={waveHeight} style={styles.wave} pointerEvents="none">
+      <Path d={d} fill={COLORS.background} />
+    </Svg>
+  );
+}
+
+// ─── Multi-color Google "G" mark ────────────────────────────────────────────
+function GoogleGIcon() {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 20 20">
+      <Path d="M19.6 10.23c0-.7-.06-1.38-.18-2.03H10v3.83h5.38a4.6 4.6 0 0 1-2 3.02v2.49h3.24a9.77 9.77 0 0 0 2.98-7.31Z" fill="#4285F4" />
+      <Path d="M10 20a9.6 9.6 0 0 0 6.62-2.46l-3.24-2.51a6.03 6.03 0 0 1-9-3.15H1.05v2.58A10 10 0 0 0 10 20Z" fill="#34A853" />
+      <Path d="M4.38 11.84a6 6 0 0 1 0-3.82V5.44H1.05a10 10 0 0 0 0 8.97l3.33-2.57Z" fill="#FBBC05" />
+      <Path d="M10 3.88c1.47 0 2.79.5 3.82 1.5l2.87-2.88A10 10 0 0 0 1.05 5.58l3.33 2.58A6 6 0 0 1 10 3.88Z" fill="#EA4335" />
+    </Svg>
+  );
+}
+
+// ─── Google Sign-In button: press-scale + loading state ────────────────────
+function GoogleButton({ loading, onPress }) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  function onPressIn() {
+    Animated.timing(scale, { toValue: 0.98, duration: 100, useNativeDriver: true }).start();
+  }
+  function onPressOut() {
+    Animated.timing(scale, { toValue: 1, duration: 100, useNativeDriver: true }).start();
+  }
+
+  return (
+    <Animated.View style={[styles.googleButtonWrap, { transform: [{ scale }] }]}>
+      <TouchableOpacity
+        style={[styles.googleButton, SHADOW.subtle]}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        disabled={loading}
+        activeOpacity={0.9}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color={COLORS.primary} />
+        ) : (
+          <>
+            <GoogleGIcon />
+            <Text style={styles.googleButtonText}>Continue with Google</Text>
+          </>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+// ─── Dismissible inline error banner ────────────────────────────────────────
+function ErrorBanner({ message, onDismiss }) {
+  return (
+    <View style={styles.errorBanner}>
+      <Text style={styles.errorText}>{message}</Text>
+      <TouchableOpacity onPress={onDismiss} hitSlop={8}>
+        <Text style={styles.errorDismiss}>×</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+function mapAuthError(err) {
+  if (err.code === statusCodes.SIGN_IN_CANCELLED) return null;
+  if (err.code === statusCodes.IN_PROGRESS) return null;
+  if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+    return 'Google Play Services not available on this device';
+  }
+  return 'Sign-in failed. Please check your connection and try again.';
+}
 
 export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
@@ -27,8 +128,12 @@ export default function AuthScreen() {
     try {
       await GoogleSignin.hasPlayServices();
       const result = await GoogleSignin.signIn();
-      const idToken = result?.data?.idToken ?? result?.idToken;
 
+      if (result.type === 'cancelled') {
+        return;
+      }
+
+      const idToken = result.data?.idToken;
       if (!idToken) {
         throw new Error('NO_ID_TOKEN');
       }
@@ -38,77 +143,48 @@ export default function AuthScreen() {
 
       const profile = await getUserProfile(user.uid);
       if (!profile) {
-        const username =
-          user.displayName || (user.email ? user.email.split('@')[0] : 'Player');
-        await createUserProfile(user.uid, { username });
+        await createUserProfile(user);
       }
-      // Navigation to Main happens automatically via onAuthStateChanged in AppNavigator.
+      // onAuthStateChanged in AppNavigator handles routing to Main.
     } catch (err) {
-      setError(mapAuthError(err));
+      const message = mapAuthError(err);
+      if (message) setError(message);
     } finally {
       setLoading(false);
     }
   }
 
-  function mapAuthError(err) {
-    if (err.code === statusCodes.SIGN_IN_CANCELLED) {
-      return null; // user cancelled — no need to surface an error
-    }
-    if (err.code === statusCodes.IN_PROGRESS) {
-      return 'Sign-in is already in progress.';
-    }
-    if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-      return 'Google Play Services is unavailable on this device.';
-    }
-    if (err.message === 'NO_ID_TOKEN') {
-      return "Couldn't complete Google sign-in. Please try again.";
-    }
-    if (err.code?.startsWith?.('auth/network-request-failed')) {
-      return 'Network error. Check your connection and try again.';
-    }
-    return "Sign-in failed. Please try again.";
-  }
-
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.brand}>
-          <Text style={styles.wordmark}>Bet Ledger</Text>
-          <Text style={styles.tagline}>
-            Track every bet. Own every outcome.
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
+      <LinearGradient
+        colors={[COLORS.primary, '#00C2A8']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.heroZone}
+      >
+        <ContourOverlay />
+        <Text style={styles.wordmark}>Bet Ledger</Text>
+        <HeroWave />
+      </LinearGradient>
+
+      <View style={styles.contentZone}>
+        <View style={styles.contentInner}>
+          <Text style={styles.tagline}>Honest bet tracking. No tips, no predictions.</Text>
+
+          <View style={styles.spacer} />
+
+          <GoogleButton loading={loading} onPress={handleGoogleSignIn} />
+
+          {error ? <ErrorBanner message={error} onDismiss={() => setError(null)} /> : null}
+
+          <Text style={styles.finePrint}>
+            BY CONTINUING, YOU AGREE THIS APP DOESN'T PROVIDE BETTING TIPS OR PREDICTIONS
           </Text>
         </View>
-
-        {error ? (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity onPress={() => setError(null)} hitSlop={8}>
-              <Text style={styles.errorDismiss}>✕</Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
-
-        <TouchableOpacity
-          style={[styles.googleButton, loading && styles.googleButtonDisabled]}
-          onPress={handleGoogleSignIn}
-          disabled={loading}
-          activeOpacity={0.85}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#1F1F1F" />
-          ) : (
-            <>
-              <Text style={styles.googleG}>G</Text>
-              <Text style={styles.googleButtonText}>Continue with Google</Text>
-            </>
-          )}
-        </TouchableOpacity>
-
-        <Text style={styles.finePrint}>
-          By continuing, you agree this app doesn't provide betting tips or predictions
-        </Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -117,37 +193,83 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  content: {
-    flex: 1,
+
+  // ─── Hero zone ──────────────────────────────────────────────────────────
+  heroZone: {
+    height: HERO_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: SPACING.xl,
-  },
-  brand: {
-    alignItems: 'center',
-    marginBottom: SPACING.xxl,
+    overflow: 'hidden',
   },
   wordmark: {
     fontFamily: FONTS.headline,
-    fontSize: 32,
-    color: COLORS.primary,
-    marginBottom: SPACING.sm,
+    fontSize: 40,
+    color: COLORS.onPrimary,
+    letterSpacing: -1.6,
+  },
+  wave: {
+    position: 'absolute',
+    bottom: -1,
+    left: 0,
+  },
+
+  // ─── Content zone ───────────────────────────────────────────────────────
+  contentZone: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    justifyContent: 'center',
+    paddingTop: SPACING.xxl,
+    paddingBottom: SPACING.xxl,
+  },
+  contentInner: {
+    width: '100%',
+    alignItems: 'center',
   },
   tagline: {
-    ...TYPE.bodyMd,
+    fontFamily: FONTS.body,
+    fontSize: 18,
+    lineHeight: 24,
     color: COLORS.onSurfaceVariant,
     textAlign: 'center',
+    maxWidth: 280,
   },
+  spacer: {
+    height: SPACING.xxl * 2,
+  },
+
+  // ─── Google button ──────────────────────────────────────────────────────
+  googleButtonWrap: {
+    alignSelf: 'stretch',
+    marginHorizontal: SPACING.lg,
+  },
+  googleButton: {
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: RADIUS.xl,
+  },
+  googleButtonText: {
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 16,
+    color: '#132030',
+    marginLeft: 12,
+  },
+
+  // ─── Error banner ───────────────────────────────────────────────────────
   errorBanner: {
-    width: '100%',
+    alignSelf: 'stretch',
+    marginHorizontal: SPACING.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: `${COLORS.tertiary}26`, // ~15% opacity coral tint
+    backgroundColor: 'rgba(255, 181, 178, 0.15)',
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.tertiary,
     borderRadius: RADIUS.md,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    marginBottom: SPACING.md,
+    padding: SPACING.md,
+    marginTop: SPACING.md,
   },
   errorText: {
     ...TYPE.bodyMd,
@@ -156,38 +278,18 @@ const styles = StyleSheet.create({
     marginRight: SPACING.sm,
   },
   errorDismiss: {
-    color: COLORS.tertiary,
+    fontFamily: FONTS.bodySemiBold,
     fontSize: 16,
-    fontFamily: FONTS.bodySemiBold,
+    color: COLORS.tertiary,
   },
-  googleButton: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.md,
-    ...SHADOW.subtle,
-  },
-  googleButtonDisabled: {
-    opacity: 0.7,
-  },
-  googleG: {
-    fontFamily: FONTS.headlineBold,
-    fontSize: 18,
-    color: '#4285F4',
-    marginRight: SPACING.sm,
-  },
-  googleButtonText: {
-    ...TYPE.titleMd,
-    fontFamily: FONTS.bodySemiBold,
-    color: '#1F1F1F',
-  },
+
+  // ─── Fine print ─────────────────────────────────────────────────────────
   finePrint: {
     ...TYPE.labelSm,
+    lineHeight: 16,
     color: COLORS.outline,
     textAlign: 'center',
+    maxWidth: 280,
     marginTop: SPACING.lg,
   },
 });
