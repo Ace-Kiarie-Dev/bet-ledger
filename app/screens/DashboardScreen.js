@@ -9,9 +9,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { signOut } from 'firebase/auth';
@@ -66,6 +66,50 @@ function calculateStats(bets, profile) {
   return { netPL, winRate, roi, lossStreak, weeklySpend, weeklyBudget, budgetPct };
 }
 
+// ─── Type 1 header (tab-root pattern): logo mark + wordmark, bell + avatar ──
+function DashboardHeader({ initial, onAvatarPress }) {
+  return (
+    <View style={styles.headerRow}>
+      <View style={styles.brandRow}>
+        <View style={styles.logoMark}>
+          <Ionicons name="bar-chart" size={16} color={COLORS.onPrimary} />
+        </View>
+        <Text style={styles.wordmark}>BET LEDGER</Text>
+      </View>
+      <View style={styles.headerActions}>
+        <TouchableOpacity style={styles.bellButton} hitSlop={8}>
+          <Ionicons name="notifications-outline" size={20} color={COLORS.onSurfaceVariant} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onAvatarPress} hitSlop={8}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initial}</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+// ─── Action row: Log Bet / History / Budget glass pills ────────────────────
+function ActionPill({ icon, label, onPress }) {
+  return (
+    <TouchableOpacity style={styles.actionPill} onPress={onPress} activeOpacity={0.6}>
+      <Ionicons name={icon} size={18} color={COLORS.primary} />
+      <Text style={styles.actionPillLabel}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function ActionRow({ onLogBet, onHistory, onBudget }) {
+  return (
+    <View style={styles.actionRow}>
+      <ActionPill icon="add-circle-outline" label="Log Bet" onPress={onLogBet} />
+      <ActionPill icon="time-outline" label="History" onPress={onHistory} />
+      <ActionPill icon="wallet-outline" label="Budget" onPress={onBudget} />
+    </View>
+  );
+}
+
 export default function DashboardScreen() {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
@@ -111,6 +155,16 @@ export default function DashboardScreen() {
     // onAuthStateChanged in AppNavigator routes back to Onboarding automatically.
   }
 
+  // TODO: Remove once SettingsScreen has a real sign-out — Session 8
+  function handleAvatarPress() {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: handleDebugSignOut },
+    ]);
+  }
+
+  const avatarInitial = (profile?.username || 'B').charAt(0).toUpperCase();
+
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingContainer} edges={['top']}>
@@ -124,17 +178,17 @@ export default function DashboardScreen() {
     return (
       <SafeAreaView style={styles.screen} edges={['top']}>
         <StatusBar barStyle="light-content" />
-        <View style={styles.emptyHeaderRow}>
-          <Text style={styles.emptyGreeting}>Hey, {profile?.username || 'Player'}</Text>
-          {/* TODO: Remove once SettingsScreen has a real sign-out — Session 8 */}
-          <TouchableOpacity onPress={handleDebugSignOut} hitSlop={8}>
-            <Text style={styles.debugSignOutText}>SIGN OUT</Text>
-          </TouchableOpacity>
+        <View style={styles.headerWrap}>
+          <DashboardHeader initial={avatarInitial} onAvatarPress={handleAvatarPress} />
         </View>
         <ScrollView
           contentContainerStyle={styles.emptyContainer}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
         >
+          <Text style={styles.emptyGreeting}>Hey, {profile?.username || 'Player'}</Text>
+          <View style={styles.emptyIconCircle}>
+            <Ionicons name="bar-chart" size={40} color={COLORS.primary} />
+          </View>
           <Text style={styles.emptyGhost}>KES 0</Text>
           <Text style={styles.emptyTitle}>Your story starts with your first bet</Text>
           <TouchableOpacity
@@ -143,7 +197,7 @@ export default function DashboardScreen() {
             activeOpacity={0.85}
           >
             <Text style={styles.emptyCtaText}>Log a Bet</Text>
-            <Ionicons name="arrow-forward" size={18} color={COLORS.onPrimary} style={{ marginLeft: SPACING.sm }} />
+            <Ionicons name="add-circle-outline" size={18} color={COLORS.onPrimary} style={{ marginLeft: SPACING.sm }} />
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -152,7 +206,7 @@ export default function DashboardScreen() {
 
   const stats = calculateStats(bets, profile);
   const isPositive = stats.netPL >= 0;
-  const heroColor = isPositive ? COLORS.primary : COLORS.tertiary;
+  const heroColor = isPositive ? COLORS.primary : COLORS.loss;
   const lossStreakDanger = stats.lossStreak >= LOSS_STREAK_DANGER;
   const budgetDanger = stats.budgetPct >= BUDGET_DANGER_PCT;
   const recentBets = bets.slice(0, 3);
@@ -160,27 +214,19 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <StatusBar barStyle="light-content" />
+      <View style={styles.headerWrap}>
+        <DashboardHeader initial={avatarInitial} onAvatarPress={handleAvatarPress} />
+      </View>
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
       >
-        <View style={[styles.header, styles.headerRow]}>
-          <View>
-            <Text style={styles.headerLabel}>Dashboard</Text>
-            <Text style={styles.headerGreeting}>Hey, {profile?.username || 'Bettor'}</Text>
-          </View>
-          {/* TODO: Remove once SettingsScreen has a real sign-out — Session 8 */}
-          <TouchableOpacity onPress={handleDebugSignOut} hitSlop={8}>
-            <Text style={styles.debugSignOutText}>SIGN OUT</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.greeting}>Hey, {profile?.username || 'Bettor'}</Text>
 
-        <LinearGradient
-          colors={[COLORS.surfaceHigh, COLORS.surfaceLow]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.heroCard, SHADOW.ambient]}
-        >
+        <View style={[styles.heroCard, SHADOW.ambient]}>
+          <View style={[styles.heroGlowOuter, { backgroundColor: heroColor }]} />
+          <View style={[styles.heroGlowInner, { backgroundColor: heroColor }]} />
+
           <Text style={styles.heroLabel}>Net P&L</Text>
           <View style={styles.heroRow}>
             <Text style={[styles.heroCurrency, { color: heroColor }]}>KES</Text>
@@ -193,7 +239,13 @@ export default function DashboardScreen() {
               {isPositive ? '+' : '−'}{Math.abs(stats.roi).toFixed(1)}% ROI
             </Text>
           </View>
-        </LinearGradient>
+        </View>
+
+        <ActionRow
+          onLogBet={() => navigation.navigate('AddBet')}
+          onHistory={() => navigation.navigate('History')}
+          onBudget={() => navigation.navigate('Settings')}
+        />
 
         <View style={styles.statRow}>
           <View style={[styles.statCard, SHADOW.subtle]}>
@@ -224,7 +276,7 @@ export default function DashboardScreen() {
             <View
               style={[
                 styles.progressFill,
-                { width: `${stats.budgetPct}%`, backgroundColor: budgetDanger ? COLORS.tertiary : COLORS.primary },
+                { width: `${stats.budgetPct}%`, backgroundColor: budgetDanger ? COLORS.loss : COLORS.primary },
               ]}
             />
           </View>
@@ -243,7 +295,9 @@ export default function DashboardScreen() {
               <View style={[styles.accentBar, { backgroundColor: outcomeColor(bet.outcome) }]} />
               <View style={styles.betInfo}>
                 <Text style={styles.betTeams} numberOfLines={1}>{bet.teams}</Text>
-                <Text style={styles.betMeta}>{bet.sport} · KES {formatNumber(bet.stake)}</Text>
+                <Text style={styles.betMeta}>
+                  {bet.sport} · <Text style={styles.betMetaFigure}>KES {formatNumber(bet.stake)}</Text>
+                </Text>
               </View>
               <View style={[styles.outcomeBadge, { backgroundColor: `${outcomeColor(bet.outcome)}26` }]}>
                 <Text style={[styles.outcomeBadgeText, { color: outcomeColor(bet.outcome) }]}>
@@ -253,10 +307,6 @@ export default function DashboardScreen() {
             </View>
           ))}
         </View>
-
-        <TouchableOpacity style={styles.cta} onPress={() => navigation.navigate('AddBet')} activeOpacity={0.85}>
-          <Text style={styles.ctaText}>Log a Bet</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -278,51 +328,97 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.xxl,
   },
 
-  // ─── Header ───
-  header: {
-    marginBottom: SPACING.lg,
+  // ─── Header (Type 1: logo mark + wordmark, bell + avatar) ───
+  headerWrap: {
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.sm,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
-  headerLabel: {
-    ...TYPE.labelSm,
-    color: COLORS.outline,
-    marginBottom: SPACING.xs,
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  headerGreeting: {
+  logoMark: {
+    width: 28,
+    height: 28,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: SPACING.sm,
+  },
+  wordmark: {
+    fontFamily: FONTS.headline,
+    fontSize: 18,
+    letterSpacing: -0.5,
+    color: COLORS.primary,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  bellButton: {
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.glass,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.surfaceHigh,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontFamily: FONTS.headlineBold,
+    fontSize: 14,
+    color: COLORS.primary,
+  },
+
+  // ─── Greeting (moved out of header, into body) ───
+  greeting: {
     fontFamily: FONTS.bodyMedium,
     fontSize: 16,
     color: COLORS.onSurfaceVariant,
-  },
-  debugSignOutText: {
-    ...TYPE.labelSm,
-    color: COLORS.tertiary,
+    marginBottom: SPACING.md,
   },
 
   // ─── Empty state ───
-  emptyHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.md,
-  },
-  emptyGreeting: {
-    fontFamily: FONTS.bodyMedium,
-    fontSize: 16,
-    color: COLORS.onSurfaceVariant,
-  },
   emptyContainer: {
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: SPACING.xl,
   },
+  emptyGreeting: {
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 16,
+    color: COLORS.onSurfaceVariant,
+    marginBottom: SPACING.lg,
+  },
+  emptyIconCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: `${COLORS.primary}1A`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+  },
   emptyGhost: {
     ...TYPE.displayLg,
+    fontFamily: FONTS.display,
     fontSize: 46,
     lineHeight: 50,
     color: COLORS.surfaceHigh,
@@ -352,11 +448,33 @@ const styles = StyleSheet.create({
     color: COLORS.onPrimary,
   },
 
-  // ─── Hero card ───
+  // ─── Hero card (glass + radial glow) ───
   heroCard: {
+    backgroundColor: COLORS.glass,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.md,
+    overflow: 'hidden',
+  },
+  heroGlowOuter: {
+    position: 'absolute',
+    top: -50,
+    left: -50,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    opacity: 0.12,
+  },
+  heroGlowInner: {
+    position: 'absolute',
+    top: -10,
+    left: 10,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    opacity: 0.22,
   },
   heroLabel: {
     ...TYPE.labelSm,
@@ -376,6 +494,7 @@ const styles = StyleSheet.create({
   },
   heroAmount: {
     ...TYPE.displayLg,
+    fontFamily: FONTS.display,
   },
   roiBadge: {
     alignSelf: 'flex-start',
@@ -385,6 +504,32 @@ const styles = StyleSheet.create({
   },
   roiBadgeText: {
     ...TYPE.labelSm,
+    fontFamily: FONTS.display,
+    textTransform: 'none',
+    letterSpacing: 0,
+  },
+
+  // ─── Action row (glass pills) ───
+  actionRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  actionPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.glass,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
+    borderRadius: 999,
+    paddingVertical: SPACING.sm,
+  },
+  actionPillLabel: {
+    ...TYPE.labelSm,
+    color: COLORS.onSurface,
+    marginLeft: SPACING.xs,
   },
 
   // ─── Stat cards ───
@@ -395,12 +540,16 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: COLORS.surfaceLow,
+    backgroundColor: COLORS.glass,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
   },
   card: {
-    backgroundColor: COLORS.surfaceLow,
+    backgroundColor: COLORS.glass,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.md,
@@ -418,6 +567,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     ...TYPE.headlineSm,
+    fontFamily: FONTS.display,
     color: COLORS.onSurface,
     marginBottom: SPACING.sm,
   },
@@ -429,11 +579,11 @@ const styles = StyleSheet.create({
   },
   budgetAmount: {
     ...TYPE.bodyMd,
-    fontFamily: FONTS.bodySemiBold,
+    fontFamily: FONTS.display,
     color: COLORS.onSurface,
   },
   dangerText: {
-    color: COLORS.tertiary,
+    color: COLORS.loss,
   },
 
   // ─── Progress bars ───
@@ -464,7 +614,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
   },
   betRowAlt: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
   accentBar: {
     width: 3,
@@ -486,6 +636,9 @@ const styles = StyleSheet.create({
     color: COLORS.onSurfaceVariant,
     marginTop: 2,
   },
+  betMetaFigure: {
+    fontFamily: FONTS.display,
+  },
   outcomeBadge: {
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
@@ -494,19 +647,5 @@ const styles = StyleSheet.create({
   outcomeBadgeText: {
     ...TYPE.labelSm,
     fontSize: 10,
-  },
-
-  // ─── CTA ───
-  cta: {
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.md,
-    alignItems: 'center',
-    marginTop: SPACING.sm,
-  },
-  ctaText: {
-    ...TYPE.titleMd,
-    fontFamily: FONTS.bodySemiBold,
-    color: COLORS.onPrimary,
   },
 });

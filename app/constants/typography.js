@@ -12,6 +12,8 @@ export const FONTS = {
   body: 'Inter_400Regular',
   bodyMedium: 'Inter_500Medium',
   bodySemiBold: 'Inter_600SemiBold',
+  // All financial/numeric figures (P&L, win rate, budget amounts, streaks) — style guide "data-display" role
+  display: 'Barlow_800ExtraBold',
 };
 
 export const TYPE = StyleSheet.create({

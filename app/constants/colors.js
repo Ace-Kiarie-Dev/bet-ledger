@@ -30,4 +30,8 @@ export const COLORS = {
   pending:          '#FFB955',
   onPrimary:        '#00382F',  // text on teal buttons
   error:            '#FFB5B2',  // same as tertiary
+
+  // ─── Glass surfaces (Mode B — Command Center) ───
+  glass:            'rgba(15, 28, 44, 0.6)',   // glass card background
+  glassBorder:      'rgba(255, 255, 255, 0.08)', // hairline edge, no heavy border
 };

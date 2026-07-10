@@ -13,6 +13,7 @@ import {
   Inter_500Medium,
   Inter_600SemiBold,
 } from '@expo-google-fonts/inter';
+import { Barlow_800ExtraBold } from '@expo-google-fonts/barlow';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AppNavigator from './app/navigation/AppNavigator';
 import { COLORS } from './app/constants';
@@ -30,6 +31,7 @@ export default function App() {
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
+    Barlow_800ExtraBold,
   });
 
   if (!fontsLoaded) {

@@ -4,9 +4,10 @@ import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'rea
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase';
-import { COLORS, FONTS, RADIUS, SHADOW } from '../constants';
+import { COLORS, TYPE, SHADOW } from '../constants';
 
 // Auth screens
 import OnboardingScreen from '../screens/OnboardingScreen';
@@ -24,73 +25,61 @@ import LeaderboardScreen from '../screens/LeaderboardScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// ─── Custom Tab Bar ──────────────────────────────────────────────────────────
+// ─── Custom Tab Bar (floating glass pill, per style guide section 6) ───────
 function CustomTabBar({ state, descriptors, navigation }) {
   const tabs = [
-    { name: 'Dashboard', icon: '▦', label: 'Dashboard' },
-    { name: 'History',   icon: '◷', label: 'History'   },
-    { name: 'AddBet',    icon: '+', label: 'Add Bet', isCenter: true },
-    { name: 'Insights',  icon: '↗', label: 'Insights'  },
-    { name: 'Settings',  icon: '⚙', label: 'Settings'  },
+    { name: 'Dashboard', icon: 'home-outline',      label: 'Dashboard' },
+    { name: 'History',   icon: 'time-outline',      label: 'History'   },
+    { name: 'AddBet',    icon: 'add',               label: 'Add Bet', isCenter: true },
+    { name: 'Insights',  icon: 'bar-chart-outline',  label: 'Insights'  },
+    { name: 'Settings',  icon: 'person-outline',     label: 'Settings'  },
   ];
 
   return (
-    <View style={styles.tabBar}>
-      {state.routes.map((route, index) => {
-        const tab = tabs[index];
-        const isFocused = state.index === index;
+    <View style={styles.tabBarWrap}>
+      <View style={styles.tabBar}>
+        {state.routes.map((route, index) => {
+          const tab = tabs[index];
+          const isFocused = state.index === index;
 
-        const onPress = () => {
-          const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
+          const onPress = () => {
+            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          if (tab.isCenter) {
+            return (
+              <TouchableOpacity key={route.key} onPress={onPress} style={styles.centerTab} activeOpacity={0.85}>
+                <View style={styles.centerButton}>
+                  <Ionicons name={tab.icon} size={28} color={COLORS.onPrimary} />
+                </View>
+              </TouchableOpacity>
+            );
           }
-        };
 
-        if (tab.isCenter) {
           return (
-            <TouchableOpacity key={route.key} onPress={onPress} style={styles.centerTab} activeOpacity={0.85}>
-              <View style={styles.centerButton}>
-                <Text style={styles.centerIcon}>+</Text>
+            <TouchableOpacity
+              key={route.key}
+              onPress={onPress}
+              style={styles.tab}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.iconChip, isFocused && styles.iconChipActive]}>
+                <Ionicons
+                  name={tab.icon}
+                  size={20}
+                  color={isFocused ? COLORS.primary : COLORS.onSurfaceVariant}
+                />
               </View>
+              <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>
+                {tab.label}
+              </Text>
             </TouchableOpacity>
           );
-        }
-
-        return (
-          <TouchableOpacity
-            key={route.key}
-            onPress={onPress}
-            style={[styles.tab, isFocused && styles.tabActive]}
-            activeOpacity={0.7}
-          >
-            <TabIcon name={route.name} focused={isFocused} />
-            <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-}
-
-// ─── Tab Icons (Material-style using text — swap for vector icons later) ────
-function TabIcon({ name, focused }) {
-  const color = focused ? COLORS.primary : '#4A5568';
-  const icons = {
-    Dashboard: { filled: '⊞', outline: '⊟' },
-    History:   { filled: '◉', outline: '○' },
-    Insights:  { filled: '▣', outline: '▢' },
-    Settings:  { filled: '◈', outline: '◇' },
-  };
-
-  // Use expo vector icons if available
-  return (
-    <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-      <Text style={{ color, fontSize: 18 }}>
-        {focused ? icons[name]?.filled : icons[name]?.outline}
-      </Text>
+        })}
+      </View>
     </View>
   );
 }
@@ -148,49 +137,51 @@ export default function AppNavigator() {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
+  // Floating wrapper — positions the glass pill above content, off the screen edge
+  tabBarWrap: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 24,
+  },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: `${COLORS.background}E6`, // 90% opacity
-    borderTopWidth: 1,
-    borderTopColor: `${COLORS.primary}26`,      // 15% opacity teal
-    paddingBottom: 24,
-    paddingTop: 12,
-    paddingHorizontal: 8,
     alignItems: 'center',
+    backgroundColor: COLORS.glass,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     ...SHADOW.ambient,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-    borderRadius: RADIUS.lg,
-  },
-  tabActive: {
-    backgroundColor: COLORS.surfaceHigh,
-    borderRadius: RADIUS.lg,
+    paddingVertical: 4,
   },
   tabLabel: {
-    fontFamily: FONTS.bodyMedium,
+    ...TYPE.labelSm,
     fontSize: 9,
-    fontWeight: '600',
-    textTransform: 'uppercase',
     letterSpacing: 0.8,
-    color: '#4A5568',
+    color: COLORS.onSurfaceVariant,
     marginTop: 2,
   },
   tabLabelActive: {
     color: COLORS.primary,
   },
-  iconWrap: {
-    width: 28,
-    height: 28,
+  iconChip: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconWrapActive: {},
-  // Center Add Bet button
+  iconChipActive: {
+    backgroundColor: `${COLORS.primary}26`, // ~15% opacity teal chip
+  },
+  // Center Add Bet button — raised FAB-style, sits above the pill
   centerTab: {
     flex: 1,
     alignItems: 'center',
@@ -207,11 +198,5 @@ const styles = StyleSheet.create({
     ...SHADOW.ambient,
     shadowColor: COLORS.primary,
     shadowOpacity: 0.4,
-  },
-  centerIcon: {
-    color: COLORS.onPrimary,
-    fontSize: 28,
-    fontWeight: '300',
-    lineHeight: 32,
   },
 });
