@@ -15,14 +15,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-// TEMP: native DateTimePicker disabled until dev-client rebuild — see DECISIONS.md matchTime entry.
-// The import itself triggers the native module lookup (TurboModuleRegistry) even if unused/unrendered,
-// so it must stay commented out, not just the render blocks below.
-// import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import { serverTimestamp } from 'firebase/firestore';
 import { auth } from '../firebase';
-import { addBet } from '../utils/storage';
+import { addBet, getUserProfile } from '../utils/storage';
+import { scheduleMatchReminder } from '../utils/notifications';
 import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW, SPORTS, PLATFORMS, SPORT_MARKETS, DEFAULT_MARKETS } from '../constants';
 
 const SPORT_ICONS = {
@@ -109,37 +107,31 @@ export default function AddBetScreen() {
     setSelection('');
   }
 
-  // TEMP: native DateTimePicker disabled until dev-client rebuild — see DECISIONS.md matchTime entry.
-  // Real open/onChange handlers preserved below, commented out, for a clean swap-back.
   function openPicker() {
-    // no-op while the native picker is disabled — matchTime stays at its default (now)
+    setPickerMode(Platform.OS === 'android' ? 'date' : 'datetime');
+    setShowPicker(true);
   }
 
-  // function openPicker() {
-  //   setPickerMode(Platform.OS === 'android' ? 'date' : 'datetime');
-  //   setShowPicker(true);
-  // }
-  //
-  // function onChangeDateTime(pickerEvent, selected) {
-  //   if (Platform.OS === 'android') {
-  //     setShowPicker(false);
-  //     if (pickerEvent.type === 'dismissed' || !selected) return;
-  //
-  //     if (pickerMode === 'date') {
-  //       const next = new Date(matchTime);
-  //       next.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
-  //       setMatchTime(next);
-  //       setPickerMode('time');
-  //       setShowPicker(true);
-  //     } else {
-  //       const next = new Date(matchTime);
-  //       next.setHours(selected.getHours(), selected.getMinutes());
-  //       setMatchTime(next);
-  //     }
-  //   } else if (selected) {
-  //     setMatchTime(selected);
-  //   }
-  // }
+  function onChangeDateTime(pickerEvent, selected) {
+    if (Platform.OS === 'android') {
+      setShowPicker(false);
+      if (pickerEvent.type === 'dismissed' || !selected) return;
+
+      if (pickerMode === 'date') {
+        const next = new Date(matchTime);
+        next.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
+        setMatchTime(next);
+        setPickerMode('time');
+        setShowPicker(true);
+      } else {
+        const next = new Date(matchTime);
+        next.setHours(selected.getHours(), selected.getMinutes());
+        setMatchTime(next);
+      }
+    } else if (selected) {
+      setMatchTime(selected);
+    }
+  }
 
   function handleSelectOutcome(value) {
     if (value === 'win' || value === 'loss') {
@@ -188,6 +180,15 @@ export default function AddBetScreen() {
       setSavedBetId(id);
       setSavedBackdated(backdated);
       setSuccessVisible(true);
+
+      if (!backdated) {
+        const profile = await getUserProfile(user.uid).catch(() => null);
+        if (profile?.notifications?.betReminders) {
+          scheduleMatchReminder({ ...betData, id }).catch((err) =>
+            console.error('Failed to schedule match reminder', err)
+          );
+        }
+      }
     } catch (err) {
       Alert.alert('Save failed', 'Could not save this bet. Please try again.');
     } finally {
@@ -272,9 +273,6 @@ export default function AddBetScreen() {
             <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
           </TouchableOpacity>
 
-          {/* TEMP: native DateTimePicker disabled until dev-client rebuild — see DECISIONS.md matchTime entry.
-              Real render blocks preserved below, commented out, for a clean swap-back.
-
           {showPicker && Platform.OS === 'android' && (
             <DateTimePicker value={matchTime} mode={pickerMode} display="default" onChange={onChangeDateTime} />
           )}
@@ -297,7 +295,6 @@ export default function AddBetScreen() {
               </View>
             </Modal>
           )}
-          */}
 
           <View style={styles.gridRow}>
             <View style={styles.gridCard}>

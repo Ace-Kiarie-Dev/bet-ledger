@@ -1,4 +1,9 @@
 // app/screens/HistoryScreen.js
+//
+// No notifications.js wiring here: settling a bet's outcome (via OutcomeUpdateSheet)
+// only happens once its matchTime has already passed, so there's nothing left to
+// remind the user about. The match-kickoff reminder lives in AddBetScreen instead,
+// scheduled at save time while matchTime is still in the future.
 import React, { useCallback, useState } from 'react';
 import {
   View,

@@ -17,6 +17,7 @@ import { Barlow_800ExtraBold } from '@expo-google-fonts/barlow';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AppNavigator from './app/navigation/AppNavigator';
 import { COLORS } from './app/constants';
+import { registerForNotificationsAsync } from './app/utils/notifications';
 
 GoogleSignin.configure({
   webClientId: '537494078170-tcafjdu2riig4ub56sb0um6gin6aoll1.apps.googleusercontent.com',
@@ -33,6 +34,10 @@ export default function App() {
     Inter_600SemiBold,
     Barlow_800ExtraBold,
   });
+
+  React.useEffect(() => {
+    registerForNotificationsAsync();
+  }, []);
 
   if (!fontsLoaded) {
     return (

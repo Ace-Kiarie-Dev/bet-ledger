@@ -18,7 +18,21 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { getUserProfile, updateUserProfile, getBets } from '../utils/storage';
+import {
+  scheduleBetReminders,
+  cancelBetReminders,
+  scheduleStreakAlerts,
+  cancelStreakAlerts,
+  schedulePerformanceUpdates,
+  cancelPerformanceUpdates,
+} from '../utils/notifications';
 import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW } from '../constants';
+
+const NOTIFICATION_HANDLERS = {
+  betReminders: { on: scheduleBetReminders, off: cancelBetReminders },
+  streakAlerts: { on: scheduleStreakAlerts, off: cancelStreakAlerts },
+  performanceUpdates: { on: schedulePerformanceUpdates, off: cancelPerformanceUpdates },
+};
 
 const DEFAULT_NOTIFICATIONS = {
   betReminders: true,
@@ -111,11 +125,12 @@ export default function SettingsScreen() {
   }
 
   function handleToggleNotification(key, value) {
-    // TODO: wire to notifications.js once dev-client rebuild includes expo-notifications.
-    // These toggles only persist on/off state for now — they do not schedule or send
-    // any real notification yet.
     const notifications = { ...(profile?.notifications || DEFAULT_NOTIFICATIONS), [key]: value };
     persistProfile({ notifications });
+
+    const handler = NOTIFICATION_HANDLERS[key];
+    const action = value ? handler?.on : handler?.off;
+    action?.().catch((err) => console.error(`Failed to ${value ? 'schedule' : 'cancel'} ${key}`, err));
   }
 
   function handleToggleSupportiveMode(value) {

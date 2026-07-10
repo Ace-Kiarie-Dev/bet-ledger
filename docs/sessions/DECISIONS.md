@@ -70,6 +70,7 @@ Purpose: remember _why_ the architecture is the way it is, so we don't relitigat
 **Decision:** In `AddBetScreen.js`, the native `<DateTimePicker>` render blocks and its open/onChange handlers are commented out (not deleted) behind `// TEMP: native DateTimePicker disabled until dev-client rebuild` markers. The match-time field is now an inert `TouchableOpacity` showing the current value as text; `matchTime` still defaults to `new Date()` on form load, so the win/loss outcome-lock logic (future vs. past `matchTime`) keeps working for testing everything else on the screen (chips, stake/odds, payout preview, save-to-Firestore).
 **Why:** Unblocks visual/functional testing of the rest of AddBetScreen without doing a one-off dev-client rebuild ahead of schedule. The `@react-native-community/datetimepicker` package and its `app.json` config plugin are untouched — this is a rendering stub, not an uninstall.
 **Follow-up required:** Once the batched dev-client rebuild lands, uncomment the real handlers/render blocks in `AddBetScreen.js` and delete the stub — do not ship the stub as final behavior.
+**Follow-up (2026-07-11):** Restored ahead of the dev-client rebuild (rebuild was about to happen, so unblocking now rather than after). The real `DateTimePicker` import, `openPicker`/`onChangeDateTime` handlers, and both Android/iOS render blocks are back in `AddBetScreen.js`; the `TEMP` stub and its markers are deleted. `matchTime` and the `isPast` win/loss lock logic were verified to still work correctly with the real picker wired in.
 
 ---
 
