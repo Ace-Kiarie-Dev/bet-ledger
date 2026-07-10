@@ -176,19 +176,24 @@ export default function AddBetScreen() {
         outcome,
         ...(backdated ? { backdated: true, outcomeSetAt: serverTimestamp() } : {}),
       };
-      const id = await addBet(user.uid, betData);
-      setSavedBetId(id);
-      setSavedBackdated(backdated);
-      setSuccessVisible(true);
-
+      let reminderNotificationId = null;
       if (!backdated) {
         const profile = await getUserProfile(user.uid).catch(() => null);
         if (profile?.notifications?.betReminders) {
-          scheduleMatchReminder({ ...betData, id }).catch((err) =>
-            console.error('Failed to schedule match reminder', err)
-          );
+          reminderNotificationId = await scheduleMatchReminder(betData).catch((err) => {
+            console.error('Failed to schedule match reminder', err);
+            return null;
+          });
         }
       }
+
+      const id = await addBet(user.uid, {
+        ...betData,
+        ...(reminderNotificationId ? { reminderNotificationId } : {}),
+      });
+      setSavedBetId(id);
+      setSavedBackdated(backdated);
+      setSuccessVisible(true);
     } catch (err) {
       Alert.alert('Save failed', 'Could not save this bet. Please try again.');
     } finally {

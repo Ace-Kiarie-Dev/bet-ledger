@@ -52,6 +52,11 @@ export async function cancelBetReminders() {
 
 // One-off reminder tied to a specific bet's kickoff — scheduled by AddBetScreen
 // when a bet is saved with a future matchTime and Bet Reminders are enabled.
+// No fixed `identifier` here (unlike the recurring reminders above): each bet
+// needs its own independently-cancellable notification, so we let
+// scheduleNotificationAsync generate one and return it to the caller, who is
+// responsible for persisting it (as `reminderNotificationId`) and later
+// passing it to cancelMatchReminder once the bet is settled.
 export async function scheduleMatchReminder(bet) {
   const matchDate = new Date(bet.matchTime);
   if (Number.isNaN(matchDate.getTime()) || matchDate.getTime() <= Date.now()) return null;
@@ -63,6 +68,11 @@ export async function scheduleMatchReminder(bet) {
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: matchDate },
   });
+}
+
+export async function cancelMatchReminder(reminderNotificationId) {
+  if (!reminderNotificationId) return;
+  await Notifications.cancelScheduledNotificationAsync(reminderNotificationId).catch(() => {});
 }
 
 // ─── Streak Alerts ───

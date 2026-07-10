@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-na
 import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../firebase';
 import { updateBet } from '../utils/storage';
+import { cancelMatchReminder } from '../utils/notifications';
 import { COLORS, FONTS, TYPE, SPACING, RADIUS } from '../constants';
 
 const SPORT_ICONS = {
@@ -57,6 +58,9 @@ export default function OutcomeUpdateSheet({ visible, bet, onDismiss, onSaved })
 
     setSaving(true);
     try {
+      if (selectedOutcome === 'win' || selectedOutcome === 'loss') {
+        await cancelMatchReminder(bet.reminderNotificationId);
+      }
       await updateBet(user.uid, bet.id, { outcome: selectedOutcome });
       onSaved?.();
     } catch (err) {

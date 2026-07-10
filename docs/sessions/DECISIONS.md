@@ -79,3 +79,10 @@ Purpose: remember _why_ the architecture is the way it is, so we don't relitigat
 **Context:** LeaderboardScreen was built with a full UI (podium, ranked list, tab switcher) but no real cross-user data exists yet. The `leaderboard/cleanStreak` and `leaderboard/budgetStreak` collections were never built, and no Firestore security rules exist governing per-user isolation — publishing a cross-user-readable leaderboard doc before rules exist is a real exposure risk, not just an incomplete feature.
 **Decision:** Ship Leaderboard showing only the current user's own computed streak, with an honest "opens once more bettors join" placeholder for other rows. Do not write real cross-user leaderboard data until (1) Firestore security rules are written and published, and (2) a write-strategy is chosen: client-side write on every bet/outcome update (simple, write-amplifying, trusts the client) vs. a scheduled Cloud Function recompute (safer, adds staleness/infra).
 **Status:** Open — write-strategy choice not yet made, tracked as next-session priority.
+
+---
+
+## 2026-07-11 — Notification reminders are unconditional, not state-aware (accepted v1 simplification)
+
+**Context:** Bet Reminders (daily 8pm) and Streak Alerts (daily 9am) fire on a fixed schedule regardless of whether anything's actually pending or at risk — expo-notifications' local scheduling fixes content/trigger at schedule-time, so truly conditional notifications (checking real Firestore state when the notification would fire) require a background task (expo-task-manager) or server-side scheduling, which wasn't built.
+**Decision:** Ship the unconditional version for v1. Revisit with a background-task or Cloud Function approach post-launch if it feels naggy in practice — Performance Updates (weekly) is a reasonable fit for unconditional scheduling either way since a weekly digest makes sense regardless of state, but Bet Reminders/Streak Alerts firing with nothing to actually report is worth watching.
