@@ -69,9 +69,21 @@ export async function addBet(userId, betData) {
   }
 }
 
+const LOCKED_FIELDS = ['outcome', 'stake', 'odds', 'market', 'selection'];
+
 export async function updateBet(userId, betId, updates) {
   try {
-    await updateDoc(doc(db, 'users', userId, 'bets', betId), updates);
+    const betRef = doc(db, 'users', userId, 'bets', betId);
+
+    if (LOCKED_FIELDS.some((field) => field in updates)) {
+      const snap = await getDoc(betRef);
+      const current = snap.exists() ? snap.data() : null;
+      if (current && (current.outcome === 'win' || current.outcome === 'loss')) {
+        throw new Error('This bet is already settled and cannot be changed.');
+      }
+    }
+
+    await updateDoc(betRef, updates);
   } catch (err) {
     console.error('updateBet failed', err);
     throw err;

@@ -2,7 +2,7 @@
 
 Append-only. Never edit past entries. If a decision gets reversed later, add a new entry that supersedes the old one — don't rewrite the old one.
 
-Purpose: remember *why* the architecture is the way it is, so we don't relitigate old decisions or wonder later "why did we do it this way?"
+Purpose: remember _why_ the architecture is the way it is, so we don't relitigate old decisions or wonder later "why did we do it this way?"
 
 ---
 
@@ -47,3 +47,26 @@ Purpose: remember *why* the architecture is the way it is, so we don't relitigat
 **Decision:** Commit and push after every screen, every meaningful bug fix, every dependency change. Never let unpushed work exceed a single conceptual chunk.
 **Why:** GitHub is the only real backup. `node_modules` doesn't matter. Uncommitted local work is at zero-day risk from hardware failure.
 **Enforcement:** No new work starts until the previous chunk is on GitHub. Session recaps confirm push status.
+
+## 2026-07-10 — Two-mode visual system: bold "Front Door" vs glass "Command Center"
+
+**Context:** Full styling revamp run through Stitch across all 10 screens. Onboarding and Auth mockups came back using a bold, full-bleed teal gradient hero with an organic wave transition, while every other screen (Dashboard, Insights, History, Settings, etc.) used a consistent glass-on-navy treatment with no solid color blocking.
+**Decision:** Keep both. Onboarding and Auth ("Mode A" — bold teal hero) get their own distinct first-impression visual language. Every other screen ("Mode B" — deep navy, glass surfaces, tonal layering) uses the calmer command-center treatment.
+**Why:** A single bold, high-impact moment at the front door is more effective than diluting it across the whole app, while the in-app experience benefits from staying calm and analytical per the original "Analytical Athleticism" brief. Rule of thumb: pre-auth surfaces (Onboarding, Auth) = Mode A; everything post-auth = Mode B.
+
+---
+
+## 2026-07-10 — Onboarding and Auth screens locked as-is
+
+**Context:** After the Mode A/B decision, Onboarding Slides 1–2 and Auth were mocked in Stitch and reviewed.
+**Decision:** No further iteration on Onboarding or Auth. Implement as shown in the finalized mockups. Onboarding Slide 3 was never run through Stitch and is not being pursued further — implement Slides 1 & 2 as designed; extend the same visual pattern for Slide 3 at implementation time if a third slide is still wanted.
+**Why:** These screens hit the mark on the first pass; further iteration wasn't adding value relative to moving the rest of the revamp forward.
+
+---
+
+## 2026-07-10 — AddBetScreen's `matchTime` picker temporarily stubbed
+
+**Context:** `@react-native-community/datetimepicker` was added for AddBetScreen's match date/time field, but rebuilding the dev client to bake in the native module (`RNCDatePicker`) is being intentionally batched with other pending native changes rather than done immediately — until then, any screen that renders the real picker crashes on load with `TurboModuleRegistry.getEnforcing(...): 'RNCDatePicker' could not be found`.
+**Decision:** In `AddBetScreen.js`, the native `<DateTimePicker>` render blocks and its open/onChange handlers are commented out (not deleted) behind `// TEMP: native DateTimePicker disabled until dev-client rebuild` markers. The match-time field is now an inert `TouchableOpacity` showing the current value as text; `matchTime` still defaults to `new Date()` on form load, so the win/loss outcome-lock logic (future vs. past `matchTime`) keeps working for testing everything else on the screen (chips, stake/odds, payout preview, save-to-Firestore).
+**Why:** Unblocks visual/functional testing of the rest of AddBetScreen without doing a one-off dev-client rebuild ahead of schedule. The `@react-native-community/datetimepicker` package and its `app.json` config plugin are untouched — this is a rendering stub, not an uninstall.
+**Follow-up required:** Once the batched dev-client rebuild lands, uncomment the real handlers/render blocks in `AddBetScreen.js` and delete the stub — do not ship the stub as final behavior.
