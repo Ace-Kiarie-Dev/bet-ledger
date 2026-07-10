@@ -59,14 +59,14 @@ leaderboard/                (not yet implemented)
 |---|---|---|
 | `OnboardingScreen.js` | ✅ Built (Session 7) | 3 polished slides with floating card animations, animated pagination, gold-accented headlines |
 | `AuthScreen.js` | ✅ Built (Session 7) | Google Sign-In working end-to-end, wave transition hero, "Bet Ledger" wordmark |
-| `DashboardScreen.js` | ✅ Built (Session 7) | Active + empty states, subtle personalized greeting, Net P&L card, Win Rate, Loss Streak, Weekly Budget, Recent Bets, "Log a Bet" CTA. Has a temporary `SIGN OUT` debug button pending SettingsScreen. |
-| `AddBetScreen.js` | ❌ Placeholder (23 lines) | Next session priority. Sport picker, teams, stake, odds, outcome selection. |
-| `HistoryScreen.js` | ❌ Placeholder | List of all bets, filters |
-| `InsightsScreen.js` | ❌ Placeholder | Charts (victory-native), streak visualizations |
-| `SettingsScreen.js` | ❌ Placeholder | Real sign-out (replaces debug button), weekly budget setter, quit-mode toggle |
-| `SplashScreen.js` | ❌ Placeholder | Currently unused — not wired into navigator |
-| `LeaderboardScreen.js` | ❌ Placeholder | Unwired — planned as friends-only leaderboards for clean streaks |
-| `AboutScreen.js` | ❌ Placeholder | Unwired — app info, credits |
+| `DashboardScreen.js` | ✅ Built (Session 8 revamp) | Command Center glass style. Type 1 header w/ avatar sign-out, glass hero P&L card w/ radial glow, action row, glass stat/budget/recent-bets cards. Debug `SIGN OUT` button removed now that Settings ships a real one. |
+| `AddBetScreen.js` | ✅ Built (Session 8) | Sport chips, event input, sport-specific market chips + selection field, match date/time (native picker temporarily stubbed — see DECISIONS.md), stake/odds grid, live payout preview, bookmaker chips, outcome selector w/ future/past lock + one-way confirm, success modal. |
+| `HistoryScreen.js` | ✅ Built (Session 8) | Time/Outcome/Sport filters (combinable), summary pills, bet cards w/ outcome accent + market:selection subtitle. Tapping a pending bet opens the new `OutcomeUpdateSheet` component; settled bets open a read-only view. |
+| `InsightsScreen.js` | ✅ Built (Session 8) | Locked (<5 bets) progress-to-unlock state; unlocked state has a custom SVG ring chart (sport share of stake), Day/Week/Month/Year range filter, Sport Efficiency, stat bento grid. |
+| `SettingsScreen.js` | ✅ Built (Session 8) | Account row, weekly budget editor (writes via new `updateUserProfile`), notification toggles (persist state only — not yet wired to real notifications), Supportive Mode toggle, About nav, real sign-out. |
+| `SplashScreen.js` | ✅ Built (Session 8) | Logo mark + radial glow + pulsing dots + tagline. Purely presentational — rendered by AppNavigator while the initial auth-state check resolves; doesn't own routing itself. |
+| `LeaderboardScreen.js` | ✅ Built (Session 8) — **UI-only** | Tab switcher (Clean Streak/Budget Streak) + honest "opens once more bettors join" placeholder. Shows only the current user's own computed row — real cross-user data is blocked on Firestore security rules + a write-strategy decision (see DECISIONS.md). Registered as a Stack.Screen but nothing currently links to it (tab bar has no 6th slot). |
+| `AboutScreen.js` | ✅ Built (Session 8) | Bio, social link chips (LinkedIn/X/Instagram/Behance), Nesture footer with live app version via `expo-constants`. |
 
 ---
 

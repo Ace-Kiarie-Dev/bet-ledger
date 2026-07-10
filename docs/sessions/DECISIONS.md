@@ -70,3 +70,11 @@ Purpose: remember _why_ the architecture is the way it is, so we don't relitigat
 **Decision:** In `AddBetScreen.js`, the native `<DateTimePicker>` render blocks and its open/onChange handlers are commented out (not deleted) behind `// TEMP: native DateTimePicker disabled until dev-client rebuild` markers. The match-time field is now an inert `TouchableOpacity` showing the current value as text; `matchTime` still defaults to `new Date()` on form load, so the win/loss outcome-lock logic (future vs. past `matchTime`) keeps working for testing everything else on the screen (chips, stake/odds, payout preview, save-to-Firestore).
 **Why:** Unblocks visual/functional testing of the rest of AddBetScreen without doing a one-off dev-client rebuild ahead of schedule. The `@react-native-community/datetimepicker` package and its `app.json` config plugin are untouched — this is a rendering stub, not an uninstall.
 **Follow-up required:** Once the batched dev-client rebuild lands, uncomment the real handlers/render blocks in `AddBetScreen.js` and delete the stub — do not ship the stub as final behavior.
+
+---
+
+## 2026-07-10 — Leaderboard: no cross-user data until Firestore rules + write-strategy are decided
+
+**Context:** LeaderboardScreen was built with a full UI (podium, ranked list, tab switcher) but no real cross-user data exists yet. The `leaderboard/cleanStreak` and `leaderboard/budgetStreak` collections were never built, and no Firestore security rules exist governing per-user isolation — publishing a cross-user-readable leaderboard doc before rules exist is a real exposure risk, not just an incomplete feature.
+**Decision:** Ship Leaderboard showing only the current user's own computed streak, with an honest "opens once more bettors join" placeholder for other rows. Do not write real cross-user leaderboard data until (1) Firestore security rules are written and published, and (2) a write-strategy is chosen: client-side write on every bet/outcome update (simple, write-amplifying, trusts the client) vs. a scheduled Cloud Function recompute (safer, adds staleness/infra).
+**Status:** Open — write-strategy choice not yet made, tracked as next-session priority.

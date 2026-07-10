@@ -45,6 +45,15 @@ export async function createUserProfile(user) {
   }
 }
 
+export async function updateUserProfile(userId, updates) {
+  try {
+    await updateDoc(doc(db, 'users', userId, 'profile', 'data'), updates);
+  } catch (err) {
+    console.error('updateUserProfile failed', err);
+    throw err;
+  }
+}
+
 export async function getBets(userId) {
   try {
     const betsQuery = query(collection(db, 'users', userId, 'bets'), orderBy('createdAt', 'desc'));

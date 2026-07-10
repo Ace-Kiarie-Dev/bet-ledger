@@ -1,6 +1,6 @@
 // app/navigation/AppNavigator.js
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -12,6 +12,7 @@ import { COLORS, TYPE, SHADOW } from '../constants';
 // Auth screens
 import OnboardingScreen from '../screens/OnboardingScreen';
 import AuthScreen from '../screens/AuthScreen';
+import SplashScreen from '../screens/SplashScreen';
 
 // App screens
 import DashboardScreen from '../screens/DashboardScreen';
@@ -112,18 +113,20 @@ export default function AppNavigator() {
   }, []);
 
   if (user === undefined) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background }}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
+    // Splash is purely the visual shown during this initial auth-state check —
+    // it doesn't own any routing decision itself.
+    return <SplashScreen />;
   }
 
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
-          <Stack.Screen name="Main" component={MainTabs} />
+          <>
+            <Stack.Screen name="Main" component={MainTabs} />
+            <Stack.Screen name="About" component={AboutScreen} />
+            <Stack.Screen name="Leaderboard" component={LeaderboardScreen} />
+          </>
         ) : (
           <>
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />

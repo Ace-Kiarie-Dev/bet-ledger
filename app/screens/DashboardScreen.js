@@ -150,16 +150,10 @@ export default function DashboardScreen() {
 
   const onRefresh = useCallback(() => loadData(true), [loadData]);
 
-  async function handleDebugSignOut() {
-    await signOut(auth);
-    // onAuthStateChanged in AppNavigator routes back to Onboarding automatically.
-  }
-
-  // TODO: Remove once SettingsScreen has a real sign-out — Session 8
   function handleAvatarPress() {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: handleDebugSignOut },
+      { text: 'Sign Out', style: 'destructive', onPress: () => signOut(auth) },
     ]);
   }
 
