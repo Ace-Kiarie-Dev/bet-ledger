@@ -9,13 +9,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StatusBar,
-  Alert,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { getUserProfile, createUserProfile, getBets } from '../utils/storage';
 import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW, TAB_BAR_CLEARANCE } from '../constants';
@@ -34,7 +32,7 @@ function outcomeColor(outcome) {
   return COLORS.pending;
 }
 
-function calculateStats(bets, profile) {
+export function calculateStats(bets, profile) {
   const settled = bets.filter((b) => b.outcome === 'win' || b.outcome === 'loss');
   const wins = settled.filter((b) => b.outcome === 'win');
 
@@ -150,10 +148,7 @@ export default function DashboardScreen() {
   const onRefresh = useCallback(() => loadData(true), [loadData]);
 
   function handleAvatarPress() {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: () => signOut(auth) },
-    ]);
+    navigation.navigate('Profile');
   }
 
   const avatarInitial = (profile?.username || 'B').charAt(0).toUpperCase();

@@ -14,13 +14,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StatusBar,
-  Alert,
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
-import { signOut } from 'firebase/auth';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { auth } from '../firebase';
 import { getUserProfile, getBets } from '../utils/storage';
 import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW, SPORTS, TAB_BAR_CLEARANCE } from '../constants';
@@ -171,6 +169,7 @@ function BetCard({ bet, onPress }) {
 }
 
 export default function HistoryScreen() {
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [profile, setProfile] = useState(null);
@@ -208,10 +207,7 @@ export default function HistoryScreen() {
   const onRefresh = useCallback(() => loadData(true), [loadData]);
 
   function handleAvatarPress() {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: () => signOut(auth) },
-    ]);
+    navigation.navigate('Profile');
   }
 
   function handleCardPress(bet) {

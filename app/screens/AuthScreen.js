@@ -52,9 +52,9 @@ function HeroWave() {
 }
 
 // ─── Multi-color Google "G" mark ────────────────────────────────────────────
-function GoogleGIcon() {
+export function GoogleGIcon({ size = 20 }) {
   return (
-    <Svg width={20} height={20} viewBox="0 0 20 20">
+    <Svg width={size} height={size} viewBox="0 0 20 20">
       <Path d="M19.6 10.23c0-.7-.06-1.38-.18-2.03H10v3.83h5.38a4.6 4.6 0 0 1-2 3.02v2.49h3.24a9.77 9.77 0 0 0 2.98-7.31Z" fill="#4285F4" />
       <Path d="M10 20a9.6 9.6 0 0 0 6.62-2.46l-3.24-2.51a6.03 6.03 0 0 1-9-3.15H1.05v2.58A10 10 0 0 0 10 20Z" fill="#34A853" />
       <Path d="M4.38 11.84a6 6 0 0 1 0-3.82V5.44H1.05a10 10 0 0 0 0 8.97l3.33-2.57Z" fill="#FBBC05" />

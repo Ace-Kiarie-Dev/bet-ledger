@@ -16,11 +16,10 @@
 // Until all three are resolved, this screen only ever shows the current user's
 // own row, computed from their own data — never fabricated other-user rows.
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, StatusBar, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, StatusBar, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
-import { signOut } from 'firebase/auth';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { auth } from '../firebase';
 import { getUserProfile, getBets, getStats } from '../utils/storage';
 import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW } from '../constants';
@@ -60,6 +59,7 @@ function HeaderRow({ initial, onAvatarPress }) {
 }
 
 export default function LeaderboardScreen() {
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [cleanStreak, setCleanStreak] = useState(0);
@@ -95,10 +95,7 @@ export default function LeaderboardScreen() {
   );
 
   function handleAvatarPress() {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: () => signOut(auth) },
-    ]);
+    navigation.navigate('Profile');
   }
 
   if (loading) {

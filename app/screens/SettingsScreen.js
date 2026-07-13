@@ -120,8 +120,7 @@ export default function SettingsScreen() {
   }
 
   function handleViewProfile() {
-    // TODO: navigate to a real profile screen once one exists — no-op for now.
-    Alert.alert('Coming Soon', 'Profile editing is on the way.');
+    navigation.navigate('Profile');
   }
 
   function handleToggleNotification(key, value) {
