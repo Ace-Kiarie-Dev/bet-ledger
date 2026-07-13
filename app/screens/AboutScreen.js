@@ -38,16 +38,30 @@ export default function AboutScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.nestureSection}>
+          <Text style={styles.nestureTitle}>Nesture-X</Text>
+          <Text style={styles.bio}>
+            Nesture-X is a Nairobi-based creative technology agency, founded in 2024. They
+            build production-grade web and mobile applications, brand identity, and digital
+            marketing — full-stack capable, from React/Node development to M-Pesa payment
+            integrations. Bet Ledger is one of Nesture-X's original products.
+          </Text>
+          <TouchableOpacity
+            style={[styles.linkChip, styles.visitChip, SHADOW.subtle]}
+            onPress={() => handleOpenLink('https://nesturex.com')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="globe-outline" size={16} color={COLORS.primary} />
+            <Text style={styles.linkChipText}>Visit Nesture-X</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.bioSection}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>PK</Text>
           </View>
           <Text style={styles.name}>Peter Kiarie</Text>
-          <Text style={styles.role}>Developer & Designer, Nesture</Text>
-          <Text style={styles.bio}>
-            Building tools that reward honesty over hype. BetLedger is Nesture's flagship
-            product — a bet tracker that helps you see your numbers clearly, win or lose.
-          </Text>
+          <Text style={styles.bio}>Built by Peter Kiarie, Developer & Designer at Nesture-X.</Text>
         </View>
 
         <Text style={styles.sectionLabel}>Connect</Text>
@@ -103,6 +117,21 @@ const styles = StyleSheet.create({
     width: 22,
   },
 
+  // ─── Nesture-X ───
+  nestureSection: {
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
+  },
+  nestureTitle: {
+    ...TYPE.headlineSm,
+    fontSize: 20,
+    color: COLORS.onSurface,
+    marginBottom: SPACING.md,
+  },
+  visitChip: {
+    marginTop: SPACING.md,
+  },
+
   // ─── Bio ───
   bioSection: {
     alignItems: 'center',
@@ -126,13 +155,7 @@ const styles = StyleSheet.create({
     ...TYPE.headlineSm,
     fontSize: 20,
     color: COLORS.onSurface,
-  },
-  role: {
-    ...TYPE.bodyMd,
-    fontSize: 13,
-    color: COLORS.onSurfaceVariant,
-    marginTop: 2,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   bio: {
     ...TYPE.bodyMd,
