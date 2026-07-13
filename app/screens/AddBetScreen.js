@@ -21,7 +21,11 @@ import { serverTimestamp } from 'firebase/firestore';
 import { auth } from '../firebase';
 import { addBet, getUserProfile } from '../utils/storage';
 import { scheduleMatchReminder } from '../utils/notifications';
-import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW, SPORTS, PLATFORMS, SPORT_MARKETS, DEFAULT_MARKETS, TAB_BAR_CLEARANCE } from '../constants';
+import {
+  COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW,
+  SPORTS, PLATFORMS, SPORT_MARKETS, DEFAULT_MARKETS,
+  EVENT_PLACEHOLDERS, DEFAULT_EVENT_PLACEHOLDER, TAB_BAR_CLEARANCE,
+} from '../constants';
 
 const SPORT_ICONS = {
   Football: 'football-outline',
@@ -63,6 +67,10 @@ const SELECTION_PLACEHOLDERS = {
 
 function getMarketsForSport(sport) {
   return SPORT_MARKETS[sport] || DEFAULT_MARKETS;
+}
+
+function getEventPlaceholder(sport) {
+  return EVENT_PLACEHOLDERS[sport] || DEFAULT_EVENT_PLACEHOLDER;
 }
 
 function getSelectionPlaceholder(sport, market) {
@@ -246,7 +254,7 @@ export default function AddBetScreen() {
           <View style={styles.fieldCard}>
             <TextInput
               style={styles.fieldInput}
-              placeholder="e.g. Arsenal vs Chelsea"
+              placeholder={getEventPlaceholder(sport)}
               placeholderTextColor={COLORS.outline}
               value={event}
               onChangeText={setEvent}

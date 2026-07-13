@@ -15,3 +15,12 @@ export const SPORT_MARKETS = {
 };
 
 export const DEFAULT_MARKETS = ['Moneyline', 'Over/Under', 'Handicap', 'Other'];
+
+// Event/Match field placeholder — sport-keyed so the example matches the selected sport.
+export const EVENT_PLACEHOLDERS = {
+  Football: 'e.g. Arsenal vs Chelsea',
+  Basketball: 'e.g. Warriors vs Lakers',
+  Tennis: 'e.g. Sinner vs Alcaraz',
+};
+
+export const DEFAULT_EVENT_PLACEHOLDER = 'e.g. Team A vs Team B';

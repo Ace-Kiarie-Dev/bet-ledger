@@ -1,7 +1,7 @@
 // app/constants/index.js
 export { COLORS } from './colors';
 export { FONTS, TYPE } from './typography';
-export { SPORTS, PLATFORMS, SPORT_MARKETS, DEFAULT_MARKETS } from './options';
+export { SPORTS, PLATFORMS, SPORT_MARKETS, DEFAULT_MARKETS, EVENT_PLACEHOLDERS, DEFAULT_EVENT_PLACEHOLDER } from './options';
 
 // Shared spacing scale
 export const SPACING = {
