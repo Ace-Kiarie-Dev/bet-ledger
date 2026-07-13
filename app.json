@@ -3,6 +3,7 @@
     "name": "BetLedger",
     "slug": "betledger",
     "version": "1.0.0",
+    "description": "Honest sports betting tracker for Kenya — log every bet, see your real stats, no tips or predictions.",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -18,6 +19,7 @@
     },
     "android": {
       "package": "com.nesture.betledger",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#061423",
         "foregroundImage": "./assets/adaptive-icon.png"
