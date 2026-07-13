@@ -13,7 +13,7 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Circle, G } from 'react-native-svg';
+import Svg, { Circle, G, Polyline } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { auth } from '../firebase';
@@ -71,14 +71,44 @@ function filterPreviousRange(bets, range, now) {
   });
 }
 
+// Net effect of a single settled bet on P&L — a win returns profit, a loss costs the
+// stake, a pending bet hasn't resolved yet so it never moves the total.
+function getBetDelta(bet) {
+  if (bet.outcome === 'win') return Number(bet.stake || 0) * Number(bet.odds || 0) - Number(bet.stake || 0);
+  if (bet.outcome === 'loss') return -Number(bet.stake || 0);
+  return 0;
+}
+
 function computeNetPL(bets) {
-  const settled = bets.filter((b) => b.outcome === 'win' || b.outcome === 'loss');
-  const totalStaked = settled.reduce((sum, b) => sum + Number(b.stake || 0), 0);
-  const totalReturns = settled.reduce((sum, b) => {
-    if (b.outcome === 'win') return sum + Number(b.stake || 0) * Number(b.odds || 0);
-    return sum;
-  }, 0);
-  return totalReturns - totalStaked;
+  return bets.reduce((sum, b) => sum + getBetDelta(b), 0);
+}
+
+// Cumulative P&L after each settled bet, in chronological order — the running
+// series the Trend Over Time line chart plots.
+function buildTrendSeries(bets) {
+  const chronological = [...bets]
+    .filter((b) => b.outcome === 'win' || b.outcome === 'loss')
+    .sort((a, b) => getBetTime(a) - getBetTime(b));
+  let cumulative = 0;
+  return chronological.map((b) => (cumulative += getBetDelta(b)));
+}
+
+// Shared by Sport/Market/Platform breakdowns — win rate grouped by whichever
+// bet field groupBy selects, keyed by label for display.
+function computeEfficiency(bets, groupBy) {
+  const groups = {};
+  bets.forEach((b) => {
+    const key = b[groupBy] || 'Other';
+    if (!groups[key]) groups[key] = { wins: 0, settled: 0 };
+    if (b.outcome === 'win' || b.outcome === 'loss') {
+      groups[key].settled += 1;
+      if (b.outcome === 'win') groups[key].wins += 1;
+    }
+  });
+  return Object.entries(groups)
+    .filter(([, g]) => g.settled > 0)
+    .map(([label, g]) => ({ label, winRate: (g.wins / g.settled) * 100 }))
+    .sort((a, b) => b.winRate - a.winRate);
 }
 
 function computeInsights(bets) {
@@ -111,21 +141,15 @@ function computeInsights(bets) {
     stakeBySport[sport] = (stakeBySport[sport] || 0) + Number(b.stake || 0);
   });
 
-  const sportGroups = {};
-  bets.forEach((b) => {
-    const sport = b.sport || 'Other';
-    if (!sportGroups[sport]) sportGroups[sport] = { wins: 0, settled: 0 };
-    if (b.outcome === 'win' || b.outcome === 'loss') {
-      sportGroups[sport].settled += 1;
-      if (b.outcome === 'win') sportGroups[sport].wins += 1;
-    }
-  });
-  const sportEfficiency = Object.entries(sportGroups)
-    .filter(([, g]) => g.settled > 0)
-    .map(([sport, g]) => ({ sport, winRate: (g.wins / g.settled) * 100 }))
-    .sort((a, b) => b.winRate - a.winRate);
+  const sportEfficiency = computeEfficiency(bets, 'sport');
+  const marketEfficiency = computeEfficiency(bets, 'market');
+  const platformEfficiency = computeEfficiency(bets, 'platform');
+  const trendPoints = buildTrendSeries(bets);
 
-  return { totalStaked, totalReturned, pendingExposure, netPL, bestStreak, stakeBySport, sportEfficiency };
+  return {
+    totalStaked, totalReturned, pendingExposure, netPL, bestStreak, stakeBySport,
+    sportEfficiency, marketEfficiency, platformEfficiency, trendPoints,
+  };
 }
 
 const RING_SIZE = 180;
@@ -200,6 +224,66 @@ function SportRing({ segments, muted }) {
             />
           ))}
       </G>
+    </Svg>
+  );
+}
+
+// ─── Efficiency row list: shared by Sport/Market/Platform breakdowns ─────────
+function EfficiencyList({ rows, icon, color, getIcon, getColor, emptyHint }) {
+  if (rows.length === 0) {
+    return <Text style={styles.statHint}>{emptyHint}</Text>;
+  }
+  return rows.map((row, index) => {
+    const rowIcon = getIcon ? getIcon(row.label) : icon;
+    const rowColor = getColor ? getColor(row.label) : color;
+    return (
+      <View key={row.label} style={[styles.efficiencyRow, index > 0 && styles.efficiencyRowBorder]}>
+        <Ionicons name={rowIcon} size={18} color={rowColor} />
+        <Text style={styles.efficiencySport} numberOfLines={1}>{row.label}</Text>
+        <View style={styles.efficiencyTrack}>
+          <View style={[styles.efficiencyFill, { width: `${row.winRate}%`, backgroundColor: rowColor }]} />
+        </View>
+        <Text style={styles.efficiencyPct}>{row.winRate.toFixed(0)}%</Text>
+      </View>
+    );
+  });
+}
+
+// ─── Trend line: cumulative net P&L across settled bets, raw SVG like the ring ──
+const TREND_WIDTH = 300;
+const TREND_HEIGHT = 100;
+const TREND_PADDING = 12;
+
+function buildTrendPolylinePoints(points) {
+  if (points.length < 2) return null;
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const span = max - min || 1;
+  const stepX = (TREND_WIDTH - TREND_PADDING * 2) / (points.length - 1);
+  return points
+    .map((v, i) => {
+      const x = TREND_PADDING + i * stepX;
+      const y = TREND_PADDING + (1 - (v - min) / span) * (TREND_HEIGHT - TREND_PADDING * 2);
+      return `${x},${y}`;
+    })
+    .join(' ');
+}
+
+function TrendLine({ points }) {
+  const polylinePoints = buildTrendPolylinePoints(points);
+  if (!polylinePoints) {
+    return <Text style={styles.statHint}>Not enough settled bets yet to show a trend.</Text>;
+  }
+  return (
+    <Svg width="100%" height={TREND_HEIGHT} viewBox={`0 0 ${TREND_WIDTH} ${TREND_HEIGHT}`} preserveAspectRatio="none">
+      <Polyline
+        points={polylinePoints}
+        fill="none"
+        stroke={COLORS.primary}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </Svg>
   );
 }
@@ -341,27 +425,37 @@ function UnlockedInsights({ bets, range, onSelectRange }) {
 
           <Text style={styles.sectionTitle}>Sport Efficiency</Text>
           <View style={[styles.card, SHADOW.subtle]}>
-            {insights.sportEfficiency.map((row, index) => (
-              <View
-                key={row.sport}
-                style={[styles.efficiencyRow, index > 0 && styles.efficiencyRowBorder]}
-              >
-                <Ionicons name={getSportIcon(row.sport)} size={18} color={getSportColor(row.sport)} />
-                <Text style={styles.efficiencySport}>{row.sport}</Text>
-                <View style={styles.efficiencyTrack}>
-                  <View
-                    style={[
-                      styles.efficiencyFill,
-                      { width: `${row.winRate}%`, backgroundColor: getSportColor(row.sport) },
-                    ]}
-                  />
-                </View>
-                <Text style={styles.efficiencyPct}>{row.winRate.toFixed(0)}%</Text>
-              </View>
-            ))}
-            {insights.sportEfficiency.length === 0 && (
-              <Text style={styles.statHint}>No settled bets in this period yet.</Text>
-            )}
+            <EfficiencyList
+              rows={insights.sportEfficiency}
+              getIcon={getSportIcon}
+              getColor={getSportColor}
+              emptyHint="No settled bets in this period yet."
+            />
+          </View>
+
+          <Text style={styles.sectionTitle}>Market Breakdown</Text>
+          <View style={[styles.card, SHADOW.subtle]}>
+            <EfficiencyList
+              rows={insights.marketEfficiency}
+              icon="pricetags-outline"
+              color={COLORS.primary}
+              emptyHint="No settled bets by market yet."
+            />
+          </View>
+
+          <Text style={styles.sectionTitle}>Platform Breakdown</Text>
+          <View style={[styles.card, SHADOW.subtle]}>
+            <EfficiencyList
+              rows={insights.platformEfficiency}
+              icon="wallet-outline"
+              color={COLORS.secondary}
+              emptyHint="No settled bets by platform yet."
+            />
+          </View>
+
+          <Text style={styles.sectionTitle}>Trend Over Time</Text>
+          <View style={[styles.card, SHADOW.subtle]}>
+            <TrendLine points={insights.trendPoints} />
           </View>
 
           <View style={styles.bentoGrid}>
@@ -765,7 +859,7 @@ const styles = StyleSheet.create({
     ...TYPE.titleMd,
     fontSize: 13,
     color: COLORS.onSurface,
-    width: 76,
+    width: 100,
     marginLeft: SPACING.sm,
   },
   efficiencyTrack: {
