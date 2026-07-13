@@ -226,9 +226,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tagline: {
-    fontFamily: FONTS.body,
-    fontSize: 18,
-    lineHeight: 24,
+    ...TYPE.bodyLg,
     color: COLORS.onSurfaceVariant,
     textAlign: 'center',
     maxWidth: 280,

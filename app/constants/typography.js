@@ -37,6 +37,12 @@ export const TYPE = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
   },
+  // Larger body text — intro/tagline copy
+  bodyLg: {
+    fontFamily: 'Inter_400Regular',
+    fontSize: 18,
+    lineHeight: 24,
+  },
   // Body text
   bodyMd: {
     fontFamily: 'Inter_400Regular',
