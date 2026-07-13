@@ -16,7 +16,7 @@
 // Until all three are resolved, this screen only ever shows the current user's
 // own row, computed from their own data — never fabricated other-user rows.
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, StatusBar, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, StatusBar, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -42,9 +42,7 @@ function HeaderRow({ initial, onAvatarPress }) {
   return (
     <View style={styles.headerRow}>
       <View style={styles.brandRow}>
-        <View style={styles.logoMark}>
-          <Ionicons name="bar-chart" size={16} color={COLORS.onPrimary} />
-        </View>
+        <Image source={require('../../assets/logo-mark.png')} style={styles.logoMark} resizeMode="contain" />
         <Text style={styles.wordmark}>BET LEDGER</Text>
       </View>
       <View style={styles.headerActions}>
@@ -201,10 +199,6 @@ const styles = StyleSheet.create({
   logoMark: {
     width: 28,
     height: 28,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginRight: SPACING.sm,
   },
   wordmark: {

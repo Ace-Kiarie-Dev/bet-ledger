@@ -2,8 +2,7 @@
 // Purely presentational — the auth-check/routing decision lives in AppNavigator.js,
 // which renders this component while it waits on the initial onAuthStateChanged result.
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, StatusBar, Animated } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, StatusBar, Animated, Image } from 'react-native';
 import { COLORS, FONTS, TYPE, SPACING } from '../constants';
 
 function Dot({ delay }) {
@@ -33,9 +32,7 @@ export default function SplashScreen() {
       <View style={styles.glowOuter} />
       <View style={styles.glowInner} />
 
-      <View style={styles.logoMark}>
-        <Ionicons name="bar-chart" size={36} color={COLORS.onPrimary} />
-      </View>
+      <Image source={require('../../assets/splash-logo.png')} style={styles.logoMark} resizeMode="contain" />
 
       <View style={styles.dotsRow}>
         <Dot delay={0} />
@@ -74,10 +71,6 @@ const styles = StyleSheet.create({
   logoMark: {
     width: 72,
     height: 72,
-    borderRadius: 20,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: SPACING.xl,
   },
   dotsRow: {
