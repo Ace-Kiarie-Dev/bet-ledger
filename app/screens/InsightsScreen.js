@@ -18,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { auth } from '../firebase';
 import { getBets } from '../utils/storage';
-import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW } from '../constants';
+import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW, TAB_BAR_CLEARANCE } from '../constants';
 
 const UNLOCK_THRESHOLD = 5;
 
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: SPACING.md,
-    paddingBottom: 140,
+    paddingBottom: TAB_BAR_CLEARANCE,
   },
 
   // ─── Header ───
@@ -704,17 +704,19 @@ const styles = StyleSheet.create({
   ringLabel: {
     ...TYPE.labelSm,
     color: COLORS.outline,
-    marginBottom: SPACING.xs,
+    marginBottom: 2,
   },
   ringAmount: {
     fontFamily: FONTS.display,
-    fontSize: 28,
+    fontSize: 22,
+    lineHeight: 24,
   },
   ringTrend: {
     ...TYPE.bodyMd,
-    fontSize: 11,
+    fontSize: 10,
+    lineHeight: 12,
     color: COLORS.onSurfaceVariant,
-    marginTop: SPACING.xs,
+    marginTop: 2,
   },
   legendRow: {
     flexDirection: 'row',

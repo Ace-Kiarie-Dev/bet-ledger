@@ -23,7 +23,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { getUserProfile, getBets } from '../utils/storage';
-import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW, SPORTS } from '../constants';
+import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW, SPORTS, TAB_BAR_CLEARANCE } from '../constants';
 import OutcomeUpdateSheet from '../components/OutcomeUpdateSheet';
 
 const TIME_FILTERS = ['Today', 'Week', 'Month', 'All'];
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: SPACING.md,
-    paddingBottom: 140,
+    paddingBottom: TAB_BAR_CLEARANCE,
   },
 
   // ─── Header ───

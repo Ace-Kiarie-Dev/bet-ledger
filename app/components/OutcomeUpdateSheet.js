@@ -13,6 +13,12 @@ const SPORT_ICONS = {
   Tennis: 'tennisball-outline',
 };
 
+const OUTCOME_ACTIVE_COLORS = {
+  win: COLORS.win,
+  loss: COLORS.loss,
+  pending: COLORS.pending,
+};
+
 function formatNumber(value) {
   const num = Math.round(Number(value) || 0);
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -94,7 +100,10 @@ export default function OutcomeUpdateSheet({ visible, bet, onDismiss, onSaved })
                   return (
                     <TouchableOpacity
                       key={value}
-                      style={[styles.chip, active && styles.chipActive]}
+                      style={[
+                        styles.chip,
+                        active && { backgroundColor: OUTCOME_ACTIVE_COLORS[value], borderColor: OUTCOME_ACTIVE_COLORS[value] },
+                      ]}
                       onPress={() => handleSelectOutcome(value)}
                       activeOpacity={0.8}
                     >

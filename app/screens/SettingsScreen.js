@@ -26,7 +26,7 @@ import {
   schedulePerformanceUpdates,
   cancelPerformanceUpdates,
 } from '../utils/notifications';
-import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW } from '../constants';
+import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW, TAB_BAR_CLEARANCE } from '../constants';
 
 const NOTIFICATION_HANDLERS = {
   betReminders: { on: scheduleBetReminders, off: cancelBetReminders },
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: SPACING.md,
-    paddingBottom: 140,
+    paddingBottom: TAB_BAR_CLEARANCE,
   },
 
   // ─── Header (Type 2) ───

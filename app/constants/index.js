@@ -21,6 +21,12 @@ export const RADIUS = {
   xl:  16,
 };
 
+// Floating tab bar clearance — bottom offset (24) + pill height (~76) + raised
+// center-button protrusion (~20) + breathing room, so scroll content never sits
+// under CustomTabBar (AppNavigator.js). Apply to every MainTabs screen's
+// scrollable contentContainerStyle paddingBottom.
+export const TAB_BAR_CLEARANCE = 160;
+
 // Ambient shadow (used on floating cards & modals)
 export const SHADOW = {
   ambient: {

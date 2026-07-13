@@ -21,12 +21,18 @@ import { serverTimestamp } from 'firebase/firestore';
 import { auth } from '../firebase';
 import { addBet, getUserProfile } from '../utils/storage';
 import { scheduleMatchReminder } from '../utils/notifications';
-import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW, SPORTS, PLATFORMS, SPORT_MARKETS, DEFAULT_MARKETS } from '../constants';
+import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW, SPORTS, PLATFORMS, SPORT_MARKETS, DEFAULT_MARKETS, TAB_BAR_CLEARANCE } from '../constants';
 
 const SPORT_ICONS = {
   Football: 'football-outline',
   Basketball: 'basketball-outline',
   Tennis: 'tennisball-outline',
+};
+
+const OUTCOME_ACTIVE_COLORS = {
+  win: COLORS.win,
+  loss: COLORS.loss,
+  pending: COLORS.pending,
 };
 
 const SELECTION_PLACEHOLDERS = {
@@ -363,7 +369,11 @@ export default function AddBetScreen() {
               return (
                 <TouchableOpacity
                   key={value}
-                  style={[styles.chip, active && styles.chipActive, disabled && styles.chipDisabled]}
+                  style={[
+                    styles.chip,
+                    active && { backgroundColor: OUTCOME_ACTIVE_COLORS[value], borderColor: OUTCOME_ACTIVE_COLORS[value] },
+                    disabled && styles.chipDisabled,
+                  ]}
                   onPress={() => handleSelectOutcome(value)}
                   activeOpacity={disabled ? 1 : 0.8}
                   disabled={disabled}
@@ -424,7 +434,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: SPACING.md,
-    paddingBottom: 140,
+    paddingBottom: TAB_BAR_CLEARANCE,
   },
 
   // ─── Header (Type 2: back arrow, title, bell/spacer) ───

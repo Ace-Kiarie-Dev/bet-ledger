@@ -18,7 +18,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { getUserProfile, createUserProfile, getBets } from '../utils/storage';
-import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW } from '../constants';
+import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW, TAB_BAR_CLEARANCE } from '../constants';
 
 const LOSS_STREAK_DANGER = 3;
 const BUDGET_DANGER_PCT = 80;
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: SPACING.md,
-    paddingBottom: SPACING.xxl,
+    paddingBottom: TAB_BAR_CLEARANCE,
   },
 
   // ─── Header (Type 1: logo mark + wordmark, bell + avatar) ───
