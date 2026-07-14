@@ -1,0 +1,52 @@
+module.exports = {
+  expo: {
+    name: 'BetLedger',
+    slug: 'betledger',
+    version: '1.0.0',
+    description: 'Honest sports betting tracker for Kenya — log every bet, see your real stats, no tips or predictions.',
+    orientation: 'portrait',
+    icon: './assets/icon.png',
+    userInterfaceStyle: 'dark',
+    backgroundColor: '#061423',
+    splash: {
+      image: './assets/splash-logo.png',
+      resizeMode: 'contain',
+      backgroundColor: '#061423',
+    },
+    ios: {
+      supportsTablet: true,
+      bundleIdentifier: 'com.nesture.betledger',
+    },
+    android: {
+      package: 'com.nesture.betledger',
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
+      versionCode: 1,
+      adaptiveIcon: {
+        backgroundColor: '#061423',
+        foregroundImage: './assets/adaptive-icon.png',
+      },
+      permissions: ['NOTIFICATIONS'],
+    },
+    web: {
+      favicon: './assets/favicon.png',
+    },
+    plugins: [
+      'expo-font',
+      'expo-dev-client',
+      '@react-native-google-signin/google-signin',
+      [
+        'expo-notifications',
+        {
+          icon: './assets/icon.png',
+          color: '#42DEC3',
+        },
+      ],
+      '@react-native-community/datetimepicker',
+    ],
+    extra: {
+      eas: {
+        projectId: '399dc02e-cfac-4f2d-8cb7-37e747b6ad64',
+      },
+    },
+  },
+};
