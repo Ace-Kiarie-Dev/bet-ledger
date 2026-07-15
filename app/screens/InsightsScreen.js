@@ -180,7 +180,7 @@ function buildRingSegments(stakeBySport) {
     });
 }
 
-// ─── Type 1 header (tab-root pattern): logo mark + wordmark, bell ───────────
+// ─── Type 1 header (tab-root pattern): logo mark + wordmark ────────────────
 function InsightsHeader() {
   return (
     <View style={styles.headerRow}>
@@ -188,9 +188,6 @@ function InsightsHeader() {
         <Image source={require('../../assets/logo-mark.png')} style={styles.logoMark} resizeMode="contain" />
         <Text style={styles.wordmark}>BET LEDGER</Text>
       </View>
-      <TouchableOpacity style={styles.bellButton} hitSlop={8}>
-        <Ionicons name="notifications-outline" size={20} color={COLORS.onSurfaceVariant} />
-      </TouchableOpacity>
     </View>
   );
 }
@@ -604,17 +601,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     color: COLORS.primary,
   },
-  bellButton: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.glass,
-    borderWidth: 1,
-    borderColor: COLORS.glassBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
   // ─── Page title (unlocked) ───
   pageTitle: {
     ...TYPE.headlineSm,

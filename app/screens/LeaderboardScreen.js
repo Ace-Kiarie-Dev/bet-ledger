@@ -45,9 +45,6 @@ function HeaderRow({ initial, onAvatarPress }) {
         <Text style={styles.wordmark}>BET LEDGER</Text>
       </View>
       <View style={styles.headerActions}>
-        <TouchableOpacity style={styles.bellButton} hitSlop={8}>
-          <Ionicons name="notifications-outline" size={20} color={COLORS.onSurfaceVariant} />
-        </TouchableOpacity>
         <TouchableOpacity onPress={onAvatarPress} hitSlop={8}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initial}</Text>
@@ -208,16 +205,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
-  },
-  bellButton: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.glass,
-    borderWidth: 1,
-    borderColor: COLORS.glassBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   avatar: {
     width: 36,

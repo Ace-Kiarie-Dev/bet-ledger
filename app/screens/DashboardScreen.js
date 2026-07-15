@@ -65,7 +65,7 @@ export function calculateStats(bets, profile) {
   return { netPL, winRate, roi, lossStreak, weeklySpend, weeklyBudget, budgetPct };
 }
 
-// ─── Type 1 header (tab-root pattern): logo mark + wordmark, bell + avatar ──
+// ─── Type 1 header (tab-root pattern): logo mark + wordmark, avatar ────────
 function DashboardHeader({ initial, onAvatarPress }) {
   return (
     <View style={styles.headerRow}>
@@ -74,9 +74,6 @@ function DashboardHeader({ initial, onAvatarPress }) {
         <Text style={styles.wordmark}>BET LEDGER</Text>
       </View>
       <View style={styles.headerActions}>
-        <TouchableOpacity style={styles.bellButton} hitSlop={8}>
-          <Ionicons name="notifications-outline" size={20} color={COLORS.onSurfaceVariant} />
-        </TouchableOpacity>
         <TouchableOpacity onPress={onAvatarPress} hitSlop={8}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initial}</Text>
@@ -316,7 +313,7 @@ const styles = StyleSheet.create({
     paddingBottom: TAB_BAR_CLEARANCE,
   },
 
-  // ─── Header (Type 1: logo mark + wordmark, bell + avatar) ───
+  // ─── Header (Type 1: logo mark + wordmark, avatar) ───
   headerWrap: {
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.sm,
@@ -345,16 +342,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
-  },
-  bellButton: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.glass,
-    borderWidth: 1,
-    borderColor: COLORS.glassBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   avatar: {
     width: 36,

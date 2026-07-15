@@ -229,9 +229,7 @@ export default function AddBetScreen() {
           <Ionicons name="arrow-back" size={22} color={COLORS.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>LOG BET</Text>
-        <TouchableOpacity style={styles.bellButton} hitSlop={8}>
-          <Ionicons name="notifications-outline" size={18} color={COLORS.onSurfaceVariant} />
-        </TouchableOpacity>
+        <View style={styles.headerSpacer} />
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -445,7 +443,7 @@ const styles = StyleSheet.create({
     paddingBottom: TAB_BAR_CLEARANCE,
   },
 
-  // ─── Header (Type 2: back arrow, title, bell/spacer) ───
+  // ─── Header (Type 2: back arrow, title, spacer) ───
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -460,15 +458,9 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     color: COLORS.primary,
   },
-  bellButton: {
+  headerSpacer: {
     width: 32,
     height: 32,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.glass,
-    borderWidth: 1,
-    borderColor: COLORS.glassBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   // ─── Section labels ───
