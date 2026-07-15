@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -52,6 +53,7 @@ function HeroWave() {
 }
 
 // ─── Multi-color Google "G" mark ────────────────────────────────────────────
+// Exported: reused by ProfileScreen's "Signed in with Google" row.
 export function GoogleGIcon({ size = 20 }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 20 20">
@@ -63,8 +65,8 @@ export function GoogleGIcon({ size = 20 }) {
   );
 }
 
-// ─── Google Sign-In button: press-scale + loading state ────────────────────
-function GoogleButton({ loading, onPress }) {
+// ─── Generic white pill button: press-scale + loading state ────────────────
+function PillButton({ style, loading, disabled, onPress, children }) {
   const scale = useRef(new Animated.Value(1)).current;
 
   function onPressIn() {
@@ -75,23 +77,16 @@ function GoogleButton({ loading, onPress }) {
   }
 
   return (
-    <Animated.View style={[styles.googleButtonWrap, { transform: [{ scale }] }]}>
+    <Animated.View style={[style, { transform: [{ scale }] }]}>
       <TouchableOpacity
-        style={[styles.googleButton, SHADOW.subtle]}
+        style={[styles.pillButton, SHADOW.subtle]}
         onPress={onPress}
         onPressIn={onPressIn}
         onPressOut={onPressOut}
-        disabled={loading}
+        disabled={disabled}
         activeOpacity={0.9}
       >
-        {loading ? (
-          <ActivityIndicator size="small" color={COLORS.primary} />
-        ) : (
-          <>
-            <GoogleGIcon />
-            <Text style={styles.googleButtonText}>Continue with Google</Text>
-          </>
-        )}
+        {loading ? <ActivityIndicator size="small" color={COLORS.primary} /> : children}
       </TouchableOpacity>
     </Animated.View>
   );
@@ -118,39 +113,113 @@ function mapAuthError(err) {
   return 'Sign-in failed. Please check your connection and try again.';
 }
 
+function getCachedUserLabel(cachedUser) {
+  const name = cachedUser?.user?.name;
+  if (name) return name;
+  const email = cachedUser?.user?.email;
+  if (email) return email.length > 18 ? `${email.slice(0, 17)}…` : email;
+  return 'Continue';
+}
+
 export default function AuthScreen() {
+  // Read once at mount: both calls are synchronous native-cache reads (no
+  // network), so there's no loading flicker to manage before picking a layout.
+  const [cachedUser, setCachedUser] = useState(() => {
+    try {
+      return GoogleSignin.hasPreviousSignIn() ? GoogleSignin.getCurrentUser() : null;
+    } catch (err) {
+      console.error('AuthScreen: failed to read cached Google session', err);
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); // 'cached' | 'switch' | 'single'
   const [error, setError] = useState(null);
 
-  async function handleGoogleSignIn() {
+  async function completeFirebaseSignIn(idToken) {
+    const credential = GoogleAuthProvider.credential(idToken);
+    const { user } = await signInWithCredential(auth, credential);
+
+    const profile = await getUserProfile(user.uid);
+    if (!profile) {
+      await createUserProfile(user);
+    }
+    // onAuthStateChanged in AppNavigator handles routing to Main.
+  }
+
+  async function performInteractiveSignIn() {
+    await GoogleSignin.hasPlayServices();
+    const result = await GoogleSignin.signIn();
+
+    if (result.type === 'cancelled') {
+      return;
+    }
+
+    const idToken = result.data?.idToken;
+    if (!idToken) {
+      throw new Error('NO_ID_TOKEN');
+    }
+
+    await completeFirebaseSignIn(idToken);
+  }
+
+  // Left button when a cached session exists: reuse it silently, no picker.
+  async function handleContinueAsCachedUser() {
     setError(null);
+    setPendingAction('cached');
     setLoading(true);
     try {
-      await GoogleSignin.hasPlayServices();
-      const result = await GoogleSignin.signIn();
-
-      if (result.type === 'cancelled') {
-        return;
+      const result = await GoogleSignin.signInSilently();
+      if (result.type !== 'success') {
+        throw new Error('SILENT_SIGN_IN_FAILED');
       }
-
       const idToken = result.data?.idToken;
       if (!idToken) {
         throw new Error('NO_ID_TOKEN');
       }
+      await completeFirebaseSignIn(idToken);
+    } catch (err) {
+      console.error('AuthScreen: silent continue failed', err);
+      setError('Could not continue automatically. Please use the Google button to sign in.');
+    } finally {
+      setLoading(false);
+      setPendingAction(null);
+    }
+  }
 
-      const credential = GoogleAuthProvider.credential(idToken);
-      const { user } = await signInWithCredential(auth, credential);
-
-      const profile = await getUserProfile(user.uid);
-      if (!profile) {
-        await createUserProfile(user);
-      }
-      // onAuthStateChanged in AppNavigator handles routing to Main.
+  // Right button when a cached session exists: clear the native cache FIRST,
+  // then sign in interactively — signOut() before signIn() is what actually
+  // forces the account picker instead of silently reusing the cached account.
+  async function handleSwitchAccount() {
+    setError(null);
+    setPendingAction('switch');
+    setLoading(true);
+    try {
+      await GoogleSignin.signOut();
+      setCachedUser(null);
+      await performInteractiveSignIn();
     } catch (err) {
       const message = mapAuthError(err);
       if (message) setError(message);
     } finally {
       setLoading(false);
+      setPendingAction(null);
+    }
+  }
+
+  // Single button when there's no cached session at all — nothing to clear.
+  async function handleSingleSignIn() {
+    setError(null);
+    setPendingAction('single');
+    setLoading(true);
+    try {
+      await performInteractiveSignIn();
+    } catch (err) {
+      const message = mapAuthError(err);
+      if (message) setError(message);
+    } finally {
+      setLoading(false);
+      setPendingAction(null);
     }
   }
 
@@ -175,7 +244,42 @@ export default function AuthScreen() {
 
           <View style={styles.spacer} />
 
-          <GoogleButton loading={loading} onPress={handleGoogleSignIn} />
+          {cachedUser ? (
+            <View style={styles.buttonRow}>
+              <PillButton
+                style={styles.pillButtonHalf}
+                loading={loading && pendingAction === 'cached'}
+                disabled={loading}
+                onPress={handleContinueAsCachedUser}
+              >
+                <Ionicons name="person-circle-outline" size={20} color="#132030" />
+                <Text style={styles.pillButtonText} numberOfLines={1} ellipsizeMode="tail">
+                  {getCachedUserLabel(cachedUser)}
+                </Text>
+              </PillButton>
+              <PillButton
+                style={styles.pillButtonHalf}
+                loading={loading && pendingAction === 'switch'}
+                disabled={loading}
+                onPress={handleSwitchAccount}
+              >
+                <GoogleGIcon size={18} />
+                <Text style={styles.pillButtonText}>Google</Text>
+              </PillButton>
+            </View>
+          ) : (
+            <View style={styles.singleButtonWrap}>
+              <PillButton
+                style={styles.pillButtonFull}
+                loading={loading && pendingAction === 'single'}
+                disabled={loading}
+                onPress={handleSingleSignIn}
+              >
+                <GoogleGIcon />
+                <Text style={styles.pillButtonText}>Sign in with Google</Text>
+              </PillButton>
+            </View>
+          )}
 
           {error ? <ErrorBanner message={error} onDismiss={() => setError(null)} /> : null}
 
@@ -235,24 +339,39 @@ const styles = StyleSheet.create({
     height: SPACING.xxl * 2,
   },
 
-  // ─── Google button ──────────────────────────────────────────────────────
-  googleButtonWrap: {
-    alignSelf: 'stretch',
-    marginHorizontal: SPACING.lg,
-  },
-  googleButton: {
+  // ─── Pill buttons (single Google button, or cached-user + Google pair) ──
+  pillButton: {
     height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: RADIUS.xl,
+    paddingHorizontal: SPACING.md,
   },
-  googleButtonText: {
+  pillButtonText: {
     fontFamily: FONTS.bodySemiBold,
-    fontSize: 16,
+    fontSize: 15,
     color: '#132030',
-    marginLeft: 12,
+    marginLeft: SPACING.xs,
+    flexShrink: 1,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginHorizontal: SPACING.lg,
+  },
+  pillButtonHalf: {
+    flex: 1,
+  },
+  singleButtonWrap: {
+    alignSelf: 'stretch',
+    marginHorizontal: SPACING.lg,
+  },
+  pillButtonFull: {
+    alignSelf: 'stretch',
   },
 
   // ─── Error banner ───────────────────────────────────────────────────────
