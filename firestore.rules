@@ -30,9 +30,14 @@ service cloud.firestore {
         allow update: if isOwner(userId) &&
           (!isSettled(resource.data) || !touchesLockedFields());
 
-        // Settled bets are permanent records — deleting one would defeat the
-        // app's whole "honest ledger" purpose, same reasoning as the update lock.
-        allow delete: if isOwner(userId) && !isSettled(resource.data);
+        // Delete-lock relaxed 2026-07-15 (superseding the original comment
+        // here) to allow client-side account deletion without the Blaze
+        // plan — see docs/sessions/DECISIONS.md. The update lock above is
+        // untouched: a settled bet still can't be edited, only removed
+        // entirely as part of deleting the whole account. Re-tighten to
+        // `if isOwner(userId) && !isSettled(resource.data)` before any
+        // cross-user feature (leaderboard, verified badges) ships.
+        allow delete: if isOwner(userId);
       }
 
       // Not yet written by the client anywhere (see app/utils/storage.js —

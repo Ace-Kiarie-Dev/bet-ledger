@@ -18,6 +18,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { getUserProfile, updateUserProfile, getBets } from '../utils/storage';
+import { deleteAccount } from '../utils/deleteAccount';
 import {
   scheduleBetReminders,
   cancelBetReminders,
@@ -76,6 +77,7 @@ export default function SettingsScreen() {
   const [weeklySpend, setWeeklySpend] = useState(0);
   const [budgetInput, setBudgetInput] = useState('');
   const [savingBudget, setSavingBudget] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const loadData = useCallback(async () => {
     const user = auth.currentUser;
@@ -141,6 +143,30 @@ export default function SettingsScreen() {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign Out', style: 'destructive', onPress: () => signOut(auth) },
     ]);
+  }
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      'Delete Account',
+      'This permanently deletes your account, profile, and entire bet history. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: async () => {
+            setDeletingAccount(true);
+            try {
+              await deleteAccount();
+            } catch (err) {
+              Alert.alert('Deletion failed', err.message || 'Could not delete your account. Please try again.');
+            } finally {
+              setDeletingAccount(false);
+            }
+          },
+        },
+      ]
+    );
   }
 
   if (loading) {
@@ -259,6 +285,23 @@ export default function SettingsScreen() {
         {/* ─── Sign out ─── */}
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut} activeOpacity={0.8}>
           <Text style={styles.signOutText}>Sign Out</Text>
+        </TouchableOpacity>
+
+        {/* ─── Delete account ─── */}
+        <Text style={styles.dangerCaption}>
+          Permanently deletes your account and all bet history. This cannot be undone.
+        </Text>
+        <TouchableOpacity
+          style={styles.deleteAccountButton}
+          onPress={handleDeleteAccount}
+          disabled={deletingAccount}
+          activeOpacity={0.85}
+        >
+          {deletingAccount ? (
+            <ActivityIndicator size="small" color={COLORS.background} />
+          ) : (
+            <Text style={styles.deleteAccountText}>Delete Account</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -447,5 +490,33 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodySemiBold,
     fontSize: 14,
     color: COLORS.loss,
+  },
+
+  // ─── Delete account ───
+  dangerCaption: {
+    ...TYPE.bodyMd,
+    fontSize: 12,
+    color: COLORS.onSurfaceVariant,
+    textAlign: 'center',
+    maxWidth: 260,
+    alignSelf: 'center',
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+  },
+  deleteAccountButton: {
+    alignSelf: 'center',
+    backgroundColor: COLORS.loss,
+    borderRadius: 999,
+    minWidth: 160,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteAccountText: {
+    ...TYPE.titleMd,
+    fontFamily: FONTS.bodySemiBold,
+    fontSize: 14,
+    color: COLORS.background,
   },
 });
