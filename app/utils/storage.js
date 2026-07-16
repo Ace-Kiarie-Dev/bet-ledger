@@ -20,10 +20,25 @@ function deriveUsername(user) {
   return typeof candidate === 'string' && candidate.trim() ? candidate.trim() : 'Player';
 }
 
+// Notification preferences default to all-on. New profiles get this written
+// explicitly at creation; profiles written before this field existed get it
+// merged in at read time (see getUserProfile) rather than backfilled via a
+// migration script — see docs/sessions/DECISIONS.md for why.
+export const DEFAULT_NOTIFICATIONS = {
+  betReminders: true,
+  streakAlerts: true,
+  performanceUpdates: true,
+};
+
 export async function getUserProfile(userId) {
   try {
     const snap = await getDoc(doc(db, 'users', userId, 'profile', 'data'));
-    return snap.exists() ? snap.data() : null;
+    if (!snap.exists()) return null;
+    const data = snap.data();
+    return {
+      ...data,
+      notifications: { ...DEFAULT_NOTIFICATIONS, ...(data.notifications || {}) },
+    };
   } catch (err) {
     console.error('getUserProfile failed', err);
     throw err;
@@ -37,6 +52,7 @@ export async function createUserProfile(user) {
       joinedAt: serverTimestamp(),
       quitModeOn: false,
       weeklyBudget: 0,
+      notifications: { ...DEFAULT_NOTIFICATIONS },
     };
     await setDoc(doc(db, 'users', user.uid, 'profile', 'data'), profileData);
   } catch (err) {
