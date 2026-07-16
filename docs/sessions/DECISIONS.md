@@ -145,3 +145,17 @@ Settings' notification toggles (Bet Reminders, Streak Alerts, Performance Update
 - `SettingsScreen.js` required zero changes — verified, not assumed: `deleteAccount`'s export name, call signature, and generic `err.message` error handling are all unchanged.
 - Deployed: `firebase deploy --only firestore:rules` (works on Spark — only Functions requires Blaze). **Still needed: on-device verification** — sign in with a test account that has settled bets, run Delete Account from Settings, confirm the full wipe succeeds and the app routes back to Auth.
 - **Follow-up fix (same day):** the success path of `deleteAccount()` now also calls `GoogleSignin.signOut()` (after `deleteUser()` succeeds, alongside `signOut(auth)`), clearing the native Google session cache. Without this, AuthScreen would still offer "Continue as {deleted user}" after a deliberate deletion, silently re-registering a new account under the stale cached identity on tap. Regular Sign Out is intentionally unchanged — it still preserves the native cache for the "Continue as X" fast path (see the AuthScreen two-path decision above); only account deletion clears it.
+
+---
+
+## 2026-07-16 — v1 ships ad-free; AdMob deferred to v2
+
+**Context:** Housekeeping sweep raised whether ads are in scope for launch. They are not — v1 has no ad SDK of any kind, and the privacy policy currently states no third-party data collection beyond Firebase Auth/Firestore.
+**Decision:** v1 ships ad-free. `react-native-google-mobile-ads` (AdMob) is deferred to a v2 build, not part of the current release.
+**When v2 ads land, all of the following are required before shipping, not optional cleanup after:**
+- (a) Privacy policy update disclosing AdMob data collection — advertising ID, device info, ad interaction data. The current "no analytics/no third-party collection" claim becomes false the moment AdMob is added, so this must ship in the same release, not trail it.
+- (b) Play Store Data Safety section re-declaration to reflect the new data collection.
+- (c) Lawful basis for ad personalization shifts from whatever v1 relies on to **consent** — a consent flow (e.g. Google's UMP SDK) must gate personalized ads, not be bolted on after.
+- (d) `react-native-google-mobile-ads` is a native module — it requires a dev-client rebuild; it cannot be added under Expo Go.
+- (e) **CRITICAL:** AdMob ad-category/advertiser blocking must be configured to exclude betting/gambling advertisers before the first ad ever serves. BetLedger's entire positioning is betting *accountability* ("no tips, no predictions") — serving Betika-style gambling ads inside this app directly contradicts that positioning and is a Play Store review risk for a gambling-adjacent listing. This is not a nice-to-have filter, it's a launch blocker for the ads feature itself.
+**Why:** Keeping ads out of v1 keeps the privacy policy simple and true, and keeps the app's "we're not trying to get you to bet more" positioning uncomplicated at launch. None of the above is deferrable to a follow-up patch once ads ship — they're preconditions, not polish.
