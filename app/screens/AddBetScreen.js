@@ -19,8 +19,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import { serverTimestamp } from 'firebase/firestore';
 import { auth } from '../firebase';
-import { addBet, getUserProfile } from '../utils/storage';
-import { scheduleMatchReminder } from '../utils/notifications';
+import { addBet } from '../utils/storage';
 import {
   COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW,
   SPORTS, PLATFORMS, SPORT_MARKETS, DEFAULT_MARKETS,
@@ -190,21 +189,8 @@ export default function AddBetScreen() {
         outcome,
         ...(backdated ? { backdated: true, outcomeSetAt: serverTimestamp() } : {}),
       };
-      let reminderNotificationId = null;
-      if (!backdated) {
-        const profile = await getUserProfile(user.uid).catch(() => null);
-        if (profile?.notifications?.betReminders) {
-          reminderNotificationId = await scheduleMatchReminder(betData).catch((err) => {
-            console.error('Failed to schedule match reminder', err);
-            return null;
-          });
-        }
-      }
+      const id = await addBet(user.uid, betData);
 
-      const id = await addBet(user.uid, {
-        ...betData,
-        ...(reminderNotificationId ? { reminderNotificationId } : {}),
-      });
       setSavedBetId(id);
       setSavedBackdated(backdated);
       setSuccessVisible(true);

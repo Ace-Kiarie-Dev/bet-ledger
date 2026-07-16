@@ -19,27 +19,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { getUserProfile, updateUserProfile, getBets } from '../utils/storage';
 import { deleteAccount } from '../utils/deleteAccount';
-import {
-  scheduleBetReminders,
-  cancelBetReminders,
-  scheduleStreakAlerts,
-  cancelStreakAlerts,
-  schedulePerformanceUpdates,
-  cancelPerformanceUpdates,
-} from '../utils/notifications';
 import { COLORS, FONTS, TYPE, SPACING, RADIUS, SHADOW, TAB_BAR_CLEARANCE } from '../constants';
-
-const NOTIFICATION_HANDLERS = {
-  betReminders: { on: scheduleBetReminders, off: cancelBetReminders },
-  streakAlerts: { on: scheduleStreakAlerts, off: cancelStreakAlerts },
-  performanceUpdates: { on: schedulePerformanceUpdates, off: cancelPerformanceUpdates },
-};
-
-const DEFAULT_NOTIFICATIONS = {
-  betReminders: true,
-  streakAlerts: true,
-  performanceUpdates: true,
-};
 
 function formatNumber(value) {
   const num = Math.round(Number(value) || 0);
@@ -54,20 +34,6 @@ function computeWeeklySpend(bets) {
   return bets
     .filter((b) => new Date(b.date || b.createdAt) >= weekAgo)
     .reduce((sum, b) => sum + Number(b.stake || 0), 0);
-}
-
-function ToggleRow({ label, value, onChange, bordered }) {
-  return (
-    <View style={[styles.toggleRow, bordered && styles.toggleRowBorder]}>
-      <Text style={styles.toggleLabel}>{label}</Text>
-      <Switch
-        value={value === undefined ? true : value}
-        onValueChange={onChange}
-        trackColor={{ false: COLORS.surfaceHighest, true: `${COLORS.primary}80` }}
-        thumbColor={value ? COLORS.primary : COLORS.onSurfaceVariant}
-      />
-    </View>
-  );
 }
 
 export default function SettingsScreen() {
@@ -125,15 +91,6 @@ export default function SettingsScreen() {
     navigation.navigate('Profile');
   }
 
-  function handleToggleNotification(key, value) {
-    const notifications = { ...(profile?.notifications || DEFAULT_NOTIFICATIONS), [key]: value };
-    persistProfile({ notifications });
-
-    const handler = NOTIFICATION_HANDLERS[key];
-    const action = value ? handler?.on : handler?.off;
-    action?.().catch((err) => console.error(`Failed to ${value ? 'schedule' : 'cancel'} ${key}`, err));
-  }
-
   function handleToggleSupportiveMode(value) {
     persistProfile({ quitModeOn: value });
   }
@@ -180,8 +137,6 @@ export default function SettingsScreen() {
 
   const avatarInitial = (profile?.username || 'B').charAt(0).toUpperCase();
   const remaining = Number(budgetInput || 0) - weeklySpend;
-  const notifications = profile?.notifications || DEFAULT_NOTIFICATIONS;
-
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <StatusBar barStyle="light-content" />
@@ -229,28 +184,6 @@ export default function SettingsScreen() {
               ? `KES ${formatNumber(remaining)} remaining this week`
               : `KES ${formatNumber(Math.abs(remaining))} over this week's budget`}
           </Text>
-        </View>
-
-        {/* ─── Notifications ─── */}
-        <Text style={styles.sectionLabel}>Notifications</Text>
-        <View style={styles.card}>
-          <ToggleRow
-            label="Bet Reminders"
-            value={notifications.betReminders}
-            onChange={(v) => handleToggleNotification('betReminders', v)}
-          />
-          <ToggleRow
-            label="Streak Alerts"
-            value={notifications.streakAlerts}
-            onChange={(v) => handleToggleNotification('streakAlerts', v)}
-            bordered
-          />
-          <ToggleRow
-            label="Performance Updates"
-            value={notifications.performanceUpdates}
-            onChange={(v) => handleToggleNotification('performanceUpdates', v)}
-            bordered
-          />
         </View>
 
         {/* ─── Supportive Mode ─── */}
@@ -423,23 +356,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.onSurfaceVariant,
     marginTop: SPACING.sm,
-  },
-
-  // ─── Toggles ───
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: SPACING.sm,
-  },
-  toggleRowBorder: {
-    borderTopWidth: 1,
-    borderTopColor: COLORS.glassBorder,
-  },
-  toggleLabel: {
-    ...TYPE.titleMd,
-    fontSize: 14,
-    color: COLORS.onSurface,
   },
 
   // ─── Supportive mode ───
